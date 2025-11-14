@@ -43,10 +43,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_14_073238) do
 
   create_table "recipients", force: :cascade do |t|
     t.string "name"
-    t.integer "age"
+    t.string "email"
     t.string "relationship"
+    t.integer "age"
+    t.string "gender"
+    t.string "occupation"
+    t.text "bio"
+    t.text "hobbies"
     t.text "likes"
+    t.text "favorite_categories"
     t.text "dislikes"
+    t.decimal "budget", precision: 10, scale: 2
     t.integer "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
