@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :recipients, dependent: :destroy
   has_many :events, dependent: :destroy
+  has_many :event_recipients, dependent: :destroy
 
   validates :name, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }

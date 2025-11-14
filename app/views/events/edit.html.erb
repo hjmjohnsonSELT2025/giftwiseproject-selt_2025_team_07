@@ -1,0 +1,41 @@
+<div class="container">
+  <h1>Edit Event</h1>
+
+  <%= form_with model: @event, local: true do |f| %>
+    <% if @event.errors.any? %>
+      <div class="alert alert-danger">
+        <h4><%= pluralize(@event.errors.count, "error") %> prohibited this event from being saved:</h4>
+        <ul>
+          <% @event.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="mb-3">
+      <%= f.label :title, class: "form-label" %>
+      <%= f.text_field :title, class: "form-control" %>
+    </div>
+
+    <div class="mb-3">
+      <%= f.label :description, class: "form-label" %>
+      <%= f.text_area :description, class: "form-control", rows: 4 %>
+    </div>
+
+    <div class="mb-3">
+      <%= f.label :date, class: "form-label" %>
+      <%= f.date_field :date, class: "form-control" %>
+    </div>
+
+    <div class="mb-3">
+      <%= f.label :budget, class: "form-label" %>
+      <%= f.number_field :budget, class: "form-control", step: 0.01 %>
+    </div>
+
+    <div class="mb-3">
+      <%= f.submit "Update Event", class: "btn btn-primary" %>
+      <%= link_to "Cancel", events_path, class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>
