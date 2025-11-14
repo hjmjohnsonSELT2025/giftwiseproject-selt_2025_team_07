@@ -1,0 +1,71 @@
+<div class="min-h-screen bg-[#f5f5fb] px-6 py-10 max-w-6xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-semibold">Recipients</h1>
+
+    <div class="flex gap-3">
+      <%= link_to "Back to dashboard", dashboard_path,
+                  class: "rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200" %>
+      <%= link_to "New Recipient", new_recipient_path,
+                  class: "rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900" %>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <div class="mb-5">
+    <%= form_with url: recipients_path, method: :get, local: true, class: "max-w-xl" do |f| %>
+      <div class="relative">
+        <span class="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
+        <%= f.text_field :query, value: @query,
+                         class: "w-full pl-8 pr-4 py-2.5 rounded-2xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#a855f7] focus:border-transparent outline-none text-sm",
+                         placeholder: "Search by name, email, or relationship..." %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+      <tr>
+        <th class="px-6 py-3 text-left font-medium text-gray-500">Name</th>
+        <th class="px-6 py-3 text-left font-medium text-gray-500">Email</th>
+        <th class="px-6 py-3 text-left font-medium text-gray-500">Relationship</th>
+        <th class="px-6 py-3 text-right font-medium text-gray-500">Actions</th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+      <% @recipients.each do |recipient| %>
+        <!-- Whole row clickable: goes to edit page -->
+        <tr class="hover:bg-purple-50 cursor-pointer"
+            onclick="window.location.href='<%= recipient_path(recipient) %>'">
+
+          <td class="px-6 py-3 text-gray-900"><%= recipient.name %></td>
+          <td class="px-6 py-3 text-gray-600"><%= recipient.email.presence || "—" %></td>
+          <td class="px-6 py-3 text-gray-600"><%= recipient.relationship.presence || "—" %></td>
+          <td class="px-6 py-3 text-right whitespace-nowrap">
+            <!-- Edit button: same as clicking the row -->
+            <%= link_to "Edit", edit_recipient_path(recipient),
+                        class: "inline-flex items-center rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 mr-2",
+                        onclick: "event.stopPropagation();" %>
+
+            <!-- Remove: keep as-is, but stop row click -->
+            <%= button_to "Remove", recipient_path(recipient),
+                          method: :delete,
+                          form: { class: "inline-block" },
+                          class: "inline-flex items-center rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50",
+                          onclick: "event.stopPropagation();" %>
+          </td>
+        </tr>
+      <% end %>
+
+      <% if @recipients.empty? %>
+        <tr>
+          <td colspan="4" class="px-6 py-6 text-center text-gray-500">
+            No recipients yet. Click "New Recipient" to add one.
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -6,8 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="39dff2d9-821d-4be5-af2c-996431bdcc91" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/C:/Users/Acer/AppData/Local/JetBrains/RubyMine2025.2/projects/giftwiseproject-selt_2025_team_07.f80d3941/rbs_collection/giftwiseproject_selt_2025_team_07/rbs_collection.lock.yaml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/C:/Users/Acer/AppData/Local/JetBrains/RubyMine2025.2/projects/giftwiseproject-selt_2025_team_07.f80d3941/rbs_collection/giftwiseproject_selt_2025_team_07/rbs_collection.yaml" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,8 +46,8 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "com.intellij.lang.ruby.rbs.tools.collection.workspace.sync.RbsCollectionUpdateProjectActivity#LAST_UPDATE_TIMESTAMP": "1763102782601",
-    "git-widget-placeholder": "login/signup",
+    "com.intellij.lang.ruby.rbs.tools.collection.workspace.sync.RbsCollectionUpdateProjectActivity#LAST_UPDATE_TIMESTAMP": "1763069777219",
+    "git-widget-placeholder": "createEvents",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",

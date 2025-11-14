@@ -26,9 +26,7 @@
       <!-- Right side -->
       <nav class="flex items-center gap-6 text-sm font-medium">
         <span class="text-gray-700">Welcome, <%= current_user.name %>!</span>
-        <%= button_to "Log Out",
-                      logout_path,
-                      method: :delete,
+        <%= button_to "Log Out", logout_path, method: :delete,
                       class: "px-5 py-2 rounded-full bg-black text-white hover:bg-gray-900 transition" %>
       </nav>
     </div>
@@ -38,158 +36,73 @@
   <div class="max-w-6xl mx-auto px-6 py-12">
     <h1 class="text-4xl font-semibold mb-8">Dashboard</h1>
 
-    <!-- TOP CARDS -->
-    <div class="grid md:grid-cols-3 gap-6 mb-10">
-      <!-- Events card: whole card goes to /events, + goes to /events/new -->
-      <!-- Events card: click box = all events, + = new event -->
-      <div
-        class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 cursor-pointer transition hover:shadow-md"
-        onclick="window.location='<%= events_path %>'"
-        role="button"
-      >
+    <!-- EXACTLY 3 CARDS SIDE BY SIDE -->
+    <div class="grid md:grid-cols-3 gap-6">
+
+      <!-- Events card -->
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-lg font-semibold">Events</h3>
-
-          <%= link_to new_event_path,
-                      class: "inline-flex items-center justify-center w-9 h-9 rounded-full border border-[#a855f7] text-[#a855f7] hover:bg-[#f4e6ff] hover:border-[#9333ea] hover:text-[#9333ea] transition",
-                      title: "Add Event",
-                      onclick: "event.stopPropagation()" do %>
-            <span class="text-lg leading-none">+</span>
+          <%= link_to new_event_path, class: "text-[#a855f7] hover:text-[#9333ea] transition" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
           <% end %>
         </div>
 
         <p class="text-3xl font-bold text-[#a855f7]"><%= current_user.events.count %></p>
       </div>
 
+      <!-- Recipients card -->
+      <div
+        class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md hover:border-[#a855f7]/40 transition"
+        onclick="if (!event.target.closest('a')) { window.location.href = '<%= recipients_path %>'; }">
 
-      <!-- Recipients card (static for now – teammate will wire links) -->
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200">
-        <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center justify-between mb-2">
           <h3 class="text-lg font-semibold">Recipients</h3>
-          <!-- later: add + button to new_recipient_path -->
+
+          <!-- plus icon goes to NEW recipient page -->
+          <%= link_to new_recipient_path,
+                      class: "text-[#a855f7] hover:text-[#9333ea] transition",
+                      onclick: "event.stopPropagation();" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="16"></line>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+          <% end %>
         </div>
-        <p class="text-3xl font-bold text-[#a855f7]"><%= current_user.recipients.count %></p>
+
+        <p class="text-3xl font-bold text-[#a855f7]">
+          <%= current_user.recipients.count %>
+        </p>
       </div>
 
       <!-- Profile card -->
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200
-            flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
-        <div>
-          <h3 class="text-lg font-semibold mb-1">Profile</h3>
-          <p class="text-sm text-gray-600">Manage your account</p>
-        </div>
-
-        <%= link_to "Edit Profile", edit_profile_path,
-                    class: "inline-block px-4 py-2 bg-violet-600 text-white rounded-lg
-              hover:bg-violet-700 transition" %>
+      <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200">
+        <h3 class="text-lg font-semibold mb-2">Profile</h3>
+        <p class="text-sm text-gray-600">Manage your account</p>
       </div>
 
     </div>
-
-    <!-- UPCOMING EVENTS SECTION -->
-    <section>
-      <!-- Header row: title + actions -->
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-xl font-semibold">Upcoming Events</h2>
-          <p class="text-sm text-gray-500">Your next gift-giving occasions</p>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <!-- View all events -->
-          <%= link_to "View all",
-                      events_path,
-                      class: "text-sm font-medium text-gray-600 hover:text-gray-900" %>
-
-          <!-- Add event -->
-          <%= link_to "+ Add Event",
-                      new_event_path,
-                      class: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
-        </div>
-      </div>
-
-      <% if @upcoming_events.any? %>
-        <!-- Card that holds the list -->
-        <div class="bg-white rounded-3xl border border-gray-200 divide-y">
-          <% @upcoming_events.each do |event| %>
-            <% primary_recipient = event.recipients.first %>
-
-            <div
-              class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50"
-              onclick="window.location='<%= event_path(event) %>'"
-            >
-              <!-- Left: icon + event info -->
-              <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg"
-                       viewBox="0 0 24 24"
-                       class="w-5 h-5 text-[#a855f7]"
-                       fill="none"
-                       stroke="currentColor"
-                       stroke-width="2"
-                       stroke-linecap="round"
-                       stroke-linejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                  </svg>
-                </div>
-
-                <div>
-                  <p class="font-medium text-gray-900"><%= event.event_name %></p>
-                  <p class="text-sm text-gray-500">
-                    <% if primary_recipient.present? %>
-                      <%= primary_recipient.name %> •
-                    <% else %>
-                      No recipient yet •
-                    <% end %>
-                    <%= event.event_date&.strftime("%b %d, %Y") %>
-                  </p>
-                </div>
-              </div>
-
-              <!-- Right: budget, days left, button -->
-              <div class="flex items-center gap-8">
-                <!-- Budget -->
-                <div class="text-right">
-                  <% if event.budget.present? %>
-                    <p class="text-sm font-medium text-gray-800">
-                      <%= number_to_currency(event.budget, precision: 0) %>
-                    </p>
-                  <% else %>
-                    <p class="text-xs text-gray-400">No budget set</p>
-                  <% end %>
-                </div>
-
-                <!-- Days left -->
-                <div class="text-right">
-                  <% if event.days_until && event.days_until >= 0 %>
-                    <p class="text-sm font-semibold text-[#a855f7]">
-                      <%= pluralize(event.days_until, "day") %> left
-                    </p>
-                  <% else %>
-                    <p class="text-xs text-gray-400">Past event</p>
-                  <% end %>
-                </div>
-
-                <!-- Get ideas (for now just goes to event show) -->
-                <div>
-                  <%= link_to "Get Ideas",
-                              event_path(event),
-                              class: "text-sm font-medium text-[#a855f7] hover:text-[#9333ea] underline-offset-2 hover:underline" %>
-                </div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <!-- Empty state -->
-        <div class="bg-white rounded-3xl border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-500">
-          No upcoming events yet. Start by adding your first event!
-        </div>
-      <% end %>
-    </section>
   </div>
 </div>
+
+<!--<script>-->
+<!--    // make whole Recipients card clickable-->
+<!--    document.addEventListener("DOMContentLoaded", () => {-->
+<!--        document.querySelectorAll(".recipient-card").forEach(card => {-->
+<!--            card.addEventListener("click", (e) => {-->
+<!--                // if user clicked on the inner "+" link, don't override it-->
+<!--                if (e.target.closest("a")) return;-->
+<!--                window.location.href = card.dataset.href;-->
+<!--            });-->
+<!--        });-->
+<!--    });-->
+<!--</script>-->

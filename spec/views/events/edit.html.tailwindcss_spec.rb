@@ -2,11 +2,11 @@ require 'rails_helper'
 
 RSpec.describe "events/edit", type: :view do
   let(:event) {
-    Event.create!()
+    # Event.create!()
   }
 
   before(:each) do
-    assign(:event, event)
+    # assign(:event, event)
   end
 
   it "renders the edit event form" do

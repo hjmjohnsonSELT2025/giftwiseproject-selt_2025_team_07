@@ -14,14 +14,8 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
   resource :profile, only: [:edit, :update]
 
-  resources :events do
-    member do
-      # Add a recipient to the event
-      post :add_recipient
-      # Remove a recipient from the event
-      delete :remove_recipient
-    end
-  end
+   resources :events
+   resources :recipients
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
