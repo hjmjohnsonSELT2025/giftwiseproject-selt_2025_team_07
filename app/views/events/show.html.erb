@@ -37,6 +37,14 @@
       Back to Events
     <% end %>
 
+    <!-- Flash Messages -->
+
+    <% if alert.present? %>
+      <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl mb-6">
+        <%= alert %>
+      </div>
+    <% end %>
+
     <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-200">
       <div class="flex items-start justify-between mb-6">
         <div>
@@ -75,11 +83,6 @@
         </div>
 
         <div class="flex gap-2">
-          <!-- Add Recipients (jumps to recipients section on edit form) -->
-          <%= link_to "Add Recipients",
-                      edit_event_path(@event, anchor: "recipients"),
-                      class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
-
           <!-- Edit whole event -->
           <%= link_to "Edit Event",
                       edit_event_path(@event),
@@ -103,27 +106,80 @@
         </div>
       <% end %>
 
-      <% if @event_recipients.any? %>
-        <div>
-          <h3 class="text-lg font-semibold mb-4">Recipients</h3>
+      <!-- Current Recipients Section -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold mb-4">Current Recipients (<%= @event_recipients.count %>)</h3>
+        <% if @event_recipients.any? %>
           <div class="space-y-3">
             <% @event_recipients.each do |event_recipient| %>
-              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-2xl">
+              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-2xl bg-gray-50">
                 <div>
                   <p class="font-medium"><%= event_recipient.recipient.name %></p>
-                  <% if event_recipient.recipient.relationship.present? %>
-                    <p class="text-sm text-gray-500"><%= event_recipient.recipient.relationship %></p>
-                  <% end %>
+                  <div class="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                    <% if event_recipient.recipient.relationship.present? %>
+                      <span><%= event_recipient.recipient.relationship %></span>
+                    <% end %>
+                    <% if event_recipient.recipient.age.present? %>
+                      <span>Age: <%= event_recipient.recipient.age %></span>
+                    <% end %>
+                  </div>
                 </div>
+
+                <%= button_to "Remove",
+                              remove_recipient_event_path(@event, event_recipient_id: event_recipient.id),
+                              method: :delete,
+                              data: { confirm: "Remove #{event_recipient.recipient.name} from this event?" },
+                              class: "px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium transition" %>
               </div>
             <% end %>
           </div>
-        </div>
-      <% else %>
-        <div class="text-center py-8 text-gray-500">
-          <p>No recipients added yet</p>
-        </div>
-      <% end %>
+        <% else %>
+          <div class="text-center py-8 text-gray-500 border border-gray-200 rounded-2xl bg-gray-50">
+            <p>No recipients added yet</p>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Available Recipients Section -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Add Recipients (<%= @available_recipients.count %> available)</h3>
+        <% if @available_recipients.any? %>
+          <div class="space-y-3">
+            <% @available_recipients.each do |recipient| %>
+              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-2xl hover:bg-gray-50 transition">
+                <div>
+                  <p class="font-medium"><%= recipient.name %></p>
+                  <div class="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                    <% if recipient.relationship.present? %>
+                      <span><%= recipient.relationship %></span>
+                    <% end %>
+                    <% if recipient.age.present? %>
+                      <span>Age: <%= recipient.age %></span>
+                    <% end %>
+                  </div>
+                  <% if recipient.likes.present? %>
+                    <p class="text-xs text-gray-400 mt-1">Likes: <%= recipient.likes.truncate(50) %></p>
+                  <% end %>
+                </div>
+
+                <%= button_to "Add to Event",
+                              add_recipient_event_path(@event, recipient_id: recipient.id),
+                              method: :post,
+                              class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-8 text-gray-500 border border-gray-200 rounded-2xl bg-gray-50">
+            <% if @all_recipients.empty? %>
+              <p class="mb-4">You haven't created any recipients yet.</p>
+              <%= link_to "Create a Recipient", "#", class: "inline-block px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+            <% else %>
+              <p>All your recipients have been added to this event!</p>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
 </div>

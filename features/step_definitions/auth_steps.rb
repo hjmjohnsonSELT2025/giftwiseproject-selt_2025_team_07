@@ -65,3 +65,23 @@ end
 Given('I am on the dashboard page') do
   visit dashboard_path
 end
+
+Given('a user exists with email {string} and password {string}') do |email, password|
+  @user = User.find_or_create_by!(email: email.downcase) do |user|
+    user.name     ||= "Test User"
+    user.password ||= password
+  end
+end
+
+Given('I am logged in as {string} with password {string}') do |email, password|
+  visit "/login"
+
+  # These should match the labels or placeholders on your login form
+  fill_in "Email", with: email
+  fill_in "Password", with: password
+
+  # Click the first submit button inside the form, regardless of its text
+  form = find("form")
+  button = form.first("input[type='submit'], button[type='submit']")
+  button.click
+end
