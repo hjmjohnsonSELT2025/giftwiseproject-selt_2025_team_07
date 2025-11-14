@@ -7,26 +7,18 @@ Given('I am on the login page') do
 end
 
 Given('a user exists with email {string}') do |email|
-  User.create!(
-    name: 'Existing User',
-    email: email,
-    password: 'password123'
-  )
+  User.create!(name: 'Existing User', email: email, password: 'Password1!')
 end
 
 Given('a user exists with email {string} and password {string} and name {string}') do |email, password, name|
-  User.create!(
-    name: name,
-    email: email,
-    password: password
-  )
+  User.create!(name: name, email: email, password: password)
 end
 
 Given('I am logged in as {string}') do |email|
   user = User.find_by(email: email)
   visit login_path
   fill_in 'Email Address', with: email
-  fill_in 'Password', with: 'password123'
+  fill_in 'Password', with: 'Password1!'
   click_button 'Log In'
 end
 
@@ -35,7 +27,7 @@ When('I fill in {string} with {string}') do |field, value|
 end
 
 When('I click {string}') do |button_or_link|
-  click_link_or_button button_or_link, match: :first
+  first(:link_or_button, button_or_link).click
 end
 
 When('I visit the home page') do
@@ -64,4 +56,8 @@ end
 
 Given('I am on the dashboard page') do
   visit dashboard_path
+end
+
+When('I select {string} from {string}') do |value, field|
+  select value, from: field
 end

@@ -8,13 +8,13 @@ class SessionsController < ApplicationController
       session[:user_id] = user.id
       redirect_to dashboard_path, notice: "Welcome back, #{user.name}!"
     else
-      flash.now[:alert] = "Invalid email or password"
+      flash.now[:alert] = 'Invalid email or password'
       render :new, status: :unprocessable_content
     end
   end
 
   def destroy
     session[:user_id] = nil
-    redirect_to root_path, notice: "You have been logged out"
+    redirect_to root_path, notice: 'You have been logged out successfully'
   end
 end

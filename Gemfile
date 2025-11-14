@@ -78,4 +78,7 @@ end
 group :test do
   gem 'shoulda-matchers', '~> 6.0'
   gem 'rails-controller-testing'
+  gem 'simplecov', require: false
 end
+
+gem "bcrypt", "~> 3.1.7"
