@@ -37,12 +37,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_13_172747) do
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
+    t.string "password"
     t.integer "age"
     t.string "occupation"
+    t.text "hobbies"
     t.text "likes"
     t.text "dislikes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   add_foreign_key "events", "users"

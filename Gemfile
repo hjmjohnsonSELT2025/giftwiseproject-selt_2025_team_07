@@ -44,9 +44,24 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
+gem "tailwindcss-rails", "~> 4.4"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
+
+  # RSpec test framework
+  gem "rspec-rails", "~> 7.1"
+
+  # Cucumber (BDD) + Capybara
+  gem "cucumber-rails", "~> 2.6", require: false
+  gem "capybara", "~> 3.40"
+
+  # Only needed when you tag scenarios/specs with JS
+  gem "selenium-webdriver", "~> 4.0"
+  gem "webdrivers", "~> 5.0"
+
+  gem "database_cleaner-active_record", "~> 2.0"
 end
 
 group :development do
@@ -60,23 +75,7 @@ group :development do
   # gem "spring"
 end
 
-group :development, :test do
-  # RSpec test framework
-  gem "rspec-rails", "~> 6.0"
-
-  # Cucumber (BDD) + Capybara
-  gem "cucumber-rails", "~> 2.6", require: false
-  gem "capybara", "~> 3.40"
-
-  # Only needed when you tag scenarios/specs with JS
-  gem "selenium-webdriver", "~> 4.0"
-  gem "webdrivers", "~> 5.0"   # manages ChromeDriver for you
-
-  # optional but handy later
-  # gem "factory_bot_rails", "~> 6.0"
-
-  gem "database_cleaner-active_record", "~> 2.0"
+group :test do
+  gem 'shoulda-matchers', '~> 6.0'
+  gem 'rails-controller-testing'
 end
-
-
-gem "tailwindcss-rails", "~> 4.4"

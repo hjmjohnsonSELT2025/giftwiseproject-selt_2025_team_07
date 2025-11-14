@@ -1,12 +1,9 @@
 <div class="min-h-screen bg-[#f5f5fb] text-gray-900">
 
-  <!-- NAVBAR -->
   <header class="w-full bg-white shadow-sm">
     <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-      <!-- Logo -->
       <div class="flex items-center gap-2">
         <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
-          <!-- Gift icon (brand) -->
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 24 24"
                class="w-6 h-6 text-[#a855f7]"
@@ -25,26 +22,20 @@
         <span class="text-xl font-semibold tracking-tight">GiftWise</span>
       </div>
 
-      <!-- Nav links -->
       <nav class="hidden md:flex items-center gap-10 text-sm font-medium">
         <a href="#features" class="text-gray-700 hover:text-black transition">Features</a>
-        <a href="#how-it-works" class="text-gray-700 hover:text-black transition">How It Works</a>
+        <a href="#how-it-works" class="btn btn-primary">See How It Works</a>
         <a href="#about" class="text-gray-700 hover:text-black transition">About</a>
-        <a href="#get-started"
-           class="px-5 py-2 rounded-full bg-black text-white hover:bg-gray-900 transition">
-          Get Started
-        </a>
+        <%= link_to "Log In", login_path, class: "text-gray-700 hover:text-black transition" %>
+        <%= link_to "Get Started", signup_path, class: "px-5 py-2 rounded-full bg-black text-white hover:bg-gray-900 transition" %>
       </nav>
     </div>
   </header>
 
-  <!-- HERO -->
   <section class="bg-[#f8fafc]">
     <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 px-6 pt-16 pb-20 items-center">
 
-      <!-- Hero Left -->
       <div>
-        <!-- Pill (no icon now, clean) -->
         <div class="inline-flex items-center px-5 py-2 mb-6 rounded-full bg-[#f4e6ff] text-[#7c3aed] text-xs font-semibold shadow-[0_6px_14px_rgba(124,58,237,0.18)]">
           Smart Gift Recommendations
         </div>
@@ -60,11 +51,7 @@
         </p>
 
         <div class="flex flex-wrap gap-4">
-          <a id="get-started"
-             href="#"
-             class="px-8 py-3 rounded-full bg-black text-white font-semibold text-sm hover:bg-gray-900 transition">
-            Get Started
-          </a>
+          <%= link_to "Get Started", signup_path, id: "get-started", class: "px-8 py-3 rounded-full bg-black text-white font-semibold text-sm hover:bg-gray-900 transition" %>
           <a href="#how-it-works"
              class="px-8 py-3 rounded-full bg-white border border-gray-300 text-gray-900 font-semibold text-sm hover:border-gray-400 transition">
             See How It Works
@@ -72,7 +59,6 @@
         </div>
       </div>
 
-      <!-- Hero Right -->
       <div class="flex justify-center">
         <div class="relative w-full max-w-md">
           <div class="absolute -inset-4 rounded-[40px] bg-gradient-to-tr from-pink-500 to-purple-500 opacity-80"></div>
@@ -89,7 +75,6 @@
     </div>
   </section>
 
-  <!-- FEATURES -->
   <section id="features" class="bg-white py-20">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-12">
@@ -142,7 +127,6 @@
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
   <section id="how-it-works" class="bg-[#f8fafc] py-20">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-12">
@@ -170,17 +154,14 @@
           <div class="bg-[#f4e6ff] rounded-3xl px-6 py-10 text-center
                       shadow-[0_12px_30px_rgba(148,82,255,0.18)]
                       border border-[#e1c9ff] flex flex-col items-center">
-            <!-- Strong, visible step number -->
             <div class="text-2xl font-semibold text-[#7c3aed] mb-2">
               <%= s[:num] %>
             </div>
 
-            <!-- Title -->
             <h3 class="mb-2 text-[18px] font-semibold text-[#020817]">
               <%= s[:title] %>
             </h3>
 
-            <!-- Description -->
             <p class="text-sm text-[#4b5563] leading-relaxed">
               <%= s[:desc] %>
             </p>
@@ -190,11 +171,10 @@
     </div>
   </section>
 
-  <!-- ABOUT / FOOTER -->
   <section id="about" class="bg-white py-10">
     <div class="max-w-4xl mx-auto px-6 text-center text-sm text-gray-500">
       <p>
-        GiftWise helps you turn “What should I buy?” into confident, thoughtful gifting.
+        GiftWise helps you turn "What should I buy?" into confident, thoughtful gifting.
         Future sprints will bring secure accounts, shared events, smart reminders, and more.
       </p>
       <p class="mt-4">
