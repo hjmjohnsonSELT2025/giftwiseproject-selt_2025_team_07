@@ -1,0 +1,206 @@
+<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
+
+  <!-- NAVBAR -->
+  <header class="w-full bg-white shadow-sm">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+      <!-- Logo -->
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
+          <!-- Gift icon (brand) -->
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               class="w-6 h-6 text-[#a855f7]"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round">
+            <rect x="3" y="8" width="18" height="13" rx="2" ry="2"></rect>
+            <path d="M12 8v13"></path>
+            <path d="M3 12h18"></path>
+            <path d="M12 8h4a2 2 0 0 0 0-4c-3 0-4 4-4 4z"></path>
+            <path d="M12 8H8a2 2 0 0 1 0-4c3 0 4 4 4 4z"></path>
+          </svg>
+        </div>
+        <span class="text-xl font-semibold tracking-tight">GiftWise</span>
+      </div>
+
+      <!-- Nav links -->
+      <nav class="hidden md:flex items-center gap-10 text-sm font-medium">
+        <a href="#features" class="text-gray-700 hover:text-black transition">Features</a>
+        <a href="#how-it-works" class="text-gray-700 hover:text-black transition">How It Works</a>
+        <a href="#about" class="text-gray-700 hover:text-black transition">About</a>
+        <a href="#get-started"
+           class="px-5 py-2 rounded-full bg-black text-white hover:bg-gray-900 transition">
+          Get Started
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="bg-[#f8fafc]">
+    <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 px-6 pt-16 pb-20 items-center">
+
+      <!-- Hero Left -->
+      <div>
+        <!-- Pill (no icon now, clean) -->
+        <div class="inline-flex items-center px-5 py-2 mb-6 rounded-full bg-[#f4e6ff] text-[#7c3aed] text-xs font-semibold shadow-[0_6px_14px_rgba(124,58,237,0.18)]">
+          Smart Gift Recommendations
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight mb-6">
+          Find the Perfect<br />
+          Gift, Every Time
+        </h1>
+
+        <p class="text-lg text-gray-600 mb-8 max-w-xl">
+          GiftWise uses AI to help you discover thoughtful, personalized gifts
+          for your loved ones. No more guessing, just perfect presents.
+        </p>
+
+        <div class="flex flex-wrap gap-4">
+          <a id="get-started"
+             href="#"
+             class="px-8 py-3 rounded-full bg-black text-white font-semibold text-sm hover:bg-gray-900 transition">
+            Get Started
+          </a>
+          <a href="#how-it-works"
+             class="px-8 py-3 rounded-full bg-white border border-gray-300 text-gray-900 font-semibold text-sm hover:border-gray-400 transition">
+            See How It Works
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero Right -->
+      <div class="flex justify-center">
+        <div class="relative w-full max-w-md">
+          <div class="absolute -inset-4 rounded-[40px] bg-gradient-to-tr from-pink-500 to-purple-500 opacity-80"></div>
+          <div class="relative bg-white rounded-[40px] overflow-hidden shadow-xl">
+            <img
+              src="https://images.unsplash.com/photo-1602347880090-a144f5b4d62c?auto=format&fit=crop&w=1200&q=80"
+              alt="Gift boxes"
+              class="w-full h-full object-cover"
+              />
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="bg-white py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-semibold mb-3">
+          Everything You Need for Perfect Gifting
+        </h2>
+        <p class="text-lg text-gray-600">
+          Powerful features to make gift-giving stress-free and delightful.
+        </p>
+      </div>
+
+      <% features = [
+        {
+          title: "AI-Powered Suggestions",
+          desc:  "Our smart algorithm learns preferences and suggests gifts your recipients will love.",
+          image: "https://images.unsplash.com/photo-1758521540562-edb6a1f7d848?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          title: "Personalized Experiences",
+          desc:  "Create profiles for friends and family to remember their interests, sizes, and preferences.",
+          image: "https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          title: "Never Miss an Occasion",
+          desc:  "Set reminders for birthdays, anniversaries, and special events so you're always prepared.",
+          image: "https://images.unsplash.com/photo-1567266230512-eabb325d4b62?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          title: "Group Gifting Made Easy",
+          desc:  "Coordinate with others to pool resources for bigger, better gifts.",
+          image: "https://images.unsplash.com/photo-1602347880090-a144f5b4d62c?auto=format&fit=crop&w=1200&q=80"
+        }
+      ] %>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <% features.each do |f| %>
+          <div class="bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden flex flex-col">
+            <img src="<%= f[:image] %>" alt="<%= f[:title] %>" class="w-full h-44 object-cover" />
+            <div class="p-6 flex-1 flex flex-col">
+              <h3 class="font-semibold text-[18px] text-[#020817] mb-2">
+                <%= f[:title] %>
+              </h3>
+              <p class="text-gray-600 text-sm leading-relaxed flex-1">
+                <%= f[:desc] %>
+              </p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="bg-[#f8fafc] py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-semibold mb-3">
+          How GiftWise Works
+        </h2>
+        <p class="text-lg text-gray-600">
+          Four simple steps to finding the perfect gift.
+        </p>
+      </div>
+
+      <% steps = [
+        { num: "01", title: "Create Profiles",
+          desc: "Add friends and family with their interests, hobbies, and preferences." },
+        { num: "02", title: "Get Recommendations",
+          desc: "Our AI analyzes profiles and suggests personalized gift ideas." },
+        { num: "03", title: "Choose & Purchase",
+          desc: "Browse curated options and buy directly through our platform." },
+        { num: "04", title: "Track & Delight",
+          desc: "Stay organized, track gifts, and never miss an important moment." }
+      ] %>
+
+      <div class="grid md:grid-cols-4 gap-6">
+        <% steps.each do |s| %>
+          <div class="bg-[#f4e6ff] rounded-3xl px-6 py-10 text-center
+                      shadow-[0_12px_30px_rgba(148,82,255,0.18)]
+                      border border-[#e1c9ff] flex flex-col items-center">
+            <!-- Strong, visible step number -->
+            <div class="text-2xl font-semibold text-[#7c3aed] mb-2">
+              <%= s[:num] %>
+            </div>
+
+            <!-- Title -->
+            <h3 class="mb-2 text-[18px] font-semibold text-[#020817]">
+              <%= s[:title] %>
+            </h3>
+
+            <!-- Description -->
+            <p class="text-sm text-[#4b5563] leading-relaxed">
+              <%= s[:desc] %>
+            </p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT / FOOTER -->
+  <section id="about" class="bg-white py-10">
+    <div class="max-w-4xl mx-auto px-6 text-center text-sm text-gray-500">
+      <p>
+        GiftWise helps you turn “What should I buy?” into confident, thoughtful gifting.
+        Future sprints will bring secure accounts, shared events, smart reminders, and more.
+      </p>
+      <p class="mt-4">
+        © <%= Time.current.year %> GiftWise. All rights reserved.
+      </p>
+    </div>
+  </section>
+
+</div>

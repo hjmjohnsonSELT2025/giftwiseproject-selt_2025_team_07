@@ -60,8 +60,23 @@ group :development do
   # gem "spring"
 end
 
-group :test do
-  # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
-  gem "capybara"
-  gem "selenium-webdriver"
+group :development, :test do
+  # RSpec test framework
+  gem "rspec-rails", "~> 6.0"
+
+  # Cucumber (BDD) + Capybara
+  gem "cucumber-rails", "~> 2.6", require: false
+  gem "capybara", "~> 3.40"
+
+  # Only needed when you tag scenarios/specs with JS
+  gem "selenium-webdriver", "~> 4.0"
+  gem "webdrivers", "~> 5.0"   # manages ChromeDriver for you
+
+  # optional but handy later
+  # gem "factory_bot_rails", "~> 6.0"
+
+  gem "database_cleaner-active_record", "~> 2.0"
 end
+
+
+gem "tailwindcss-rails", "~> 4.4"
