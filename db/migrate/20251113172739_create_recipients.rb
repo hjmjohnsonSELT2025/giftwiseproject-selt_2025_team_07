@@ -11,4 +11,7 @@ class CreateRecipients < ActiveRecord::Migration[7.1]
       t.timestamps
     end
   end
+  def down
+    drop_table :recipients
+  end
 end
