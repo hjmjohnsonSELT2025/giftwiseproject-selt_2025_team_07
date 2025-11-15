@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe RecipientsController, type: :controller do
-  let(:user) { User.create!(name: "Test User", email: "user@mail.com", password: "password123") }
+  let(:user) { User.create!(name: "Test User", email: "user@mail.com", password: "Password1!") }
   let(:recipient) { user.recipients.create!(name: "Mani") }
 
   before { session[:user_id] = user.id }

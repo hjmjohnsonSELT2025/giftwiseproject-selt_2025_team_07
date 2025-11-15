@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe Recipient, type: :model do
-  let(:user) { User.create!(name: "Test User", email: "user@mail.com", password: "password123") }
+  let(:user) { User.create!(name: "Test User", email: "user@mail.com", password: "Password1!") }
 
   it "is valid with valid attributes" do
     rec = user.recipients.new(name: "John")

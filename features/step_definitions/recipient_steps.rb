@@ -1,10 +1,11 @@
 Given("I am logged in") do
-  @user = User.create!(name: "Test User", email: "test@test.com", password: "password123")
+  @user = User.create!(name: "Test User", email: "test@test.com", password: "Password1!")
   visit login_path
   fill_in "Email", with: "test@test.com"
-  fill_in "Password", with: "password123"
+  fill_in "Password", with: "Password1!"
   click_button "Log In"
 end
+
 
 When("I visit the recipients page") do
   visit recipients_path
