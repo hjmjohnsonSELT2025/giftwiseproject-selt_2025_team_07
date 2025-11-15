@@ -4,9 +4,6 @@ Given('I am on the home page') do
   visit root_path
 end
 
-# Then('I should see {string}') do |text|
-#   expect(page).to have_content(text)
-# end
 
 Then('I should see a {string} button') do |button_text|
   begin
@@ -20,9 +17,7 @@ Then('the page should have a section with id {string}') do |section_id|
   expect(page).to have_css("##{section_id}", visible: :all)
 end
 
-# When('I click {string}') do |link_text|
-#   click_link(link_text)
-# end
+
 
 Then('I should be at the {string} section') do |section_id|
   expect(page).to have_css("##{section_id}", visible: true)

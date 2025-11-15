@@ -32,9 +32,7 @@ When("I submit the recipient form") do
   end
 end
 
-# Then("I should be redirected to the dashboard") do
-#   expect(current_path).to eq(dashboard_path)
-# end
+
 
 Given("a recipient named {string} exists") do |name|
   @recipient = @user.recipients.create!(name: name)

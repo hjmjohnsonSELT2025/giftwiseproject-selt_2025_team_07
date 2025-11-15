@@ -230,26 +230,6 @@ Then('I should see {string} under the past events section') do |event|
 end
 
 
-# Given("I am logged in") do
-#   @user = User.create!(name: "Test User", email: "test@test.com", password: "Password1!")
-#   visit login_path
-#   fill_in "Email", with: "test@test.com"
-#   fill_in "Password", with: "Password1!"
-#   click_button "Log In"
-# end
-
-
-# When("I visit the recipients page") do
-#   visit recipients_path
-# end
-#
-# Then("I should see the list of my recipients") do
-#   expect(page).to have_content("Recipients")
-# end
-
-# When("I visit the new recipient page") do
-#   visit new_recipient_path
-# end
 
 When("I submit the recipient form") do
   # Try multiple possible button texts
@@ -264,9 +244,6 @@ When("I submit the recipient form") do
   end
 end
 
-# Then("I should be redirected to the dashboard") do
-#   expect(current_path).to eq(dashboard_path)
-# end
 
 Given("a recipient named {string} exists") do |name|
   @recipient = @user.recipients.create!(name: name)
@@ -300,12 +277,6 @@ When("I delete the recipient {string}") do |name|
   end
 end
 
-# Then("I should not see {string}") do |text|
-#   expect(page).not_to have_content(text)
-# end
-
-
-# features/step_definitions/dashboard_steps.rb
 
 Given('a user exists with email {string} and password {string}') do |email, password|
   @user = User.create!(

@@ -8,10 +8,6 @@ Feature: Event Management
     And I am logged in as "john@example.com" with password "Password@123"
 
 
-  # ---------------------------------------------------------------
-  # SUCCESS SCENARIOS
-  # ---------------------------------------------------------------
-
   Scenario: Successfully create event with all fields
     Given I am on the dashboard page
     When I click on the "Add Event" button
@@ -125,10 +121,6 @@ Feature: Event Management
     And the flash message should remain visible
 
 
-  # ---------------------------------------------------------------
-  # FAILURE SCENARIOS
-  # ---------------------------------------------------------------
-
   Scenario: Fail to create event without event name
     Given I am on the new event page
     When I fill in "Event Date" with tomorrow's date
@@ -189,10 +181,6 @@ Feature: Event Management
     And no event should be created
 
 
-  # ---------------------------------------------------------------
-  # ACCESS CONTROL / NAVIGATION
-  # ---------------------------------------------------------------
-
   Scenario: Attempt to create event without authentication
     Given I am logged out
     When I try to access the new event page
@@ -235,7 +223,7 @@ Feature: Event Management
   Then I should be on the new event page
 
       
-      Scenario: Back to dashboard button navigates correctly
+  Scenario: Back to dashboard button navigates correctly
   Given I am logged in as "john@example.com" with password "Password@123"
   And I visit the events page
   When I click on "← Back to Dashboard"
