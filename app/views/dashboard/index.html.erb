@@ -1,9 +1,8 @@
 <div class="min-h-screen bg-[#f5f5fb] text-gray-900">
-  <!-- NAVBAR -->
   <header class="w-full bg-white shadow-sm">
     <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-      <!-- Logo -->
-      <div class="flex items-center gap-2">
+      <%= link_to(current_user.present? ? dashboard_path : root_path,
+                  class: "flex items-center gap-2 hover:opacity-90 transition") do %>
         <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 24 24"
@@ -21,27 +20,75 @@
           </svg>
         </div>
         <span class="text-xl font-semibold tracking-tight">GiftWise</span>
-      </div>
+      <% end %>
 
-      <!-- Right side -->
-      <nav class="flex items-center gap-6 text-sm font-medium">
-        <span class="text-gray-700">Welcome, <%= current_user.name %>!</span>
-        <%= button_to "Log Out",
-                      logout_path,
-                      method: :delete,
-                      class: "px-5 py-2 rounded-full bg-black text-white hover:bg-gray-900 transition" %>
+
+      <nav class="flex items-center gap-4 text-sm font-medium">
+        <span class="text-gray-700">
+          Welcome, <%= current_user.name.presence || "there" %>!
+        </span>
+
+        <div class="relative" data-controller="dropdown">
+          <button
+            type="button"
+            data-action="click->dropdown#toggle"
+            class="w-9 h-9 rounded-full bg-[#f4e6ff] flex items-center justify-center
+             hover:bg-[#e9d5ff] transition shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24"
+                 class="w-5 h-5 text-[#a855f7]"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3"></circle>
+              <path d="M6 19c0-3 2.5-5 6-5s6 2 6 5"></path>
+            </svg>
+          </button>
+
+          <div
+            data-dropdown-target="menu"
+            class="hidden absolute left-0 mt-3 w-64 origin-top-left rounded-2xl bg-white
+         shadow-lg border border-gray-200 py-2 z-50"
+          >
+            <div class="px-4 pb-2 border-b border-gray-100 mb-2">
+              <p class="text-sm font-semibold text-gray-900 truncate">
+                <%= current_user.name %>
+              </p>
+              <% if current_user.respond_to?(:email) && current_user.email.present? %>
+                <p class="text-xs text-gray-500 truncate">
+                  <%= current_user.email %>
+                </p>
+              <% end %>
+            </div>
+
+            <%= link_to "Edit Profile",
+                        edit_profile_path,
+                        class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap" %>
+
+            <%= link_to "Change password",
+                        edit_password_path,
+                        class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap" %>
+
+            <div class="mt-2 pt-2 border-t border-gray-100">
+              <%= button_to "Log Out",
+                            logout_path,
+                            method: :delete,
+                            class: "w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 whitespace-nowrap" %>
+            </div>
+          </div>
+        </div>
       </nav>
+
+
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main class="max-w-6xl mx-auto px-6 pt-10 pb-16">
-    <!-- Title -->
     <h1 class="text-4xl font-semibold mb-8">Dashboard</h1>
-
-    <!-- TOP CARDS -->
     <section class="grid md:grid-cols-3 gap-6 mb-12">
-      <!-- Events card -->
       <div
         class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 cursor-pointer transition hover:shadow-md"
         onclick="window.location='<%= events_path %>'"
@@ -59,7 +106,6 @@
         <p class="text-3xl font-bold text-[#a855f7]"><%= current_user.events.count %></p>
       </div>
 
-      <!-- Recipients card -->
       <div
         class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 cursor-pointer transition hover:shadow-md"
         onclick="window.location='<%= recipients_path %>'"
@@ -77,7 +123,6 @@
         <p class="text-3xl font-bold text-[#a855f7]"><%= current_user.recipients.count %></p>
       </div>
 
-      <!-- Profile card -->
       <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 flex flex-col justify-between">
         <div class="mb-3">
           <h3 class="text-lg font-semibold mb-1">Profile</h3>
@@ -91,7 +136,6 @@
       </div>
     </section>
 
-    <!-- UPCOMING EVENTS SECTION -->
     <section>
       <div class="flex items-center justify-between mb-4">
         <div>
@@ -115,7 +159,7 @@
             <% primary_recipient = event.recipients.first %>
             <div
               class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50"
-              onclick="window.location='<%= event_path(event) %>'"
+              onclick="window.location='<%= event_path(event, from: "dashboard") %>'"
             >
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
@@ -164,7 +208,7 @@
 
                 <div>
                   <%= link_to "Get Ideas",
-                              event_path(event),
+                              event_path(event, from: "dashboard"),
                               class: "text-sm font-medium text-[#a855f7] hover:text-[#9333ea] underline-offset-2 hover:underline",
                               onclick: "event.stopPropagation()" %>
                 </div>

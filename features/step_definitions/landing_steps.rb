@@ -1,4 +1,3 @@
-# features/step_definitions/landing_steps.rb
 
 Given('I am on the home page') do
   visit root_path
@@ -16,8 +15,6 @@ end
 Then('the page should have a section with id {string}') do |section_id|
   expect(page).to have_css("##{section_id}", visible: :all)
 end
-
-
 
 Then('I should be at the {string} section') do |section_id|
   expect(page).to have_css("##{section_id}", visible: true)

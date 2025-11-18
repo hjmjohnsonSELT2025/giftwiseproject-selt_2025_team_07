@@ -29,7 +29,6 @@ Feature: Public Landing Page
     And I should see the step "03" with title "Choose & Purchase"
     And I should see the step "04" with title "Track & Delight"
 
-  # Enable this later when you wire the modal
   @wip @javascript
   Scenario: Get Started opens the auth modal (placeholder)
     When I click "Get Started"
