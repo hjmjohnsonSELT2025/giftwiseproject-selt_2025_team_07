@@ -18,7 +18,6 @@ class EventsController < ApplicationController
     @event = current_user.events.build(event_params)
 
     if @event.save
-      # Add recipients to event if selected
       if params[:recipient_ids].present?
         params[:recipient_ids].reject(&:blank?).each do |recipient_id|
           @event.event_recipients.create(
@@ -37,14 +36,8 @@ class EventsController < ApplicationController
 
   def show
     @event_recipients = @event.event_recipients.includes(:recipient)
-
-    # Get all recipients belonging to the current user
     @all_recipients = current_user.recipients.order(:name)
-
-    # Get IDs of recipients already added to this event
     @added_recipient_ids = @event_recipients.pluck(:recipient_id)
-
-    # Get available recipients (not yet added to this event)
     @available_recipients = @all_recipients.where.not(id: @added_recipient_ids)
   end
 
@@ -54,7 +47,6 @@ class EventsController < ApplicationController
 
   def update
     if @event.update(event_params)
-      # Update recipients if some were submitted
       if params[:recipient_ids]
         @event.event_recipients.destroy_all
 
@@ -73,7 +65,6 @@ class EventsController < ApplicationController
     end
   end
 
-  # NEW ACTION: Add a recipient to the event
   def add_recipient
     recipient = current_user.recipients.find_by(id: params[:recipient_id])
 
@@ -82,7 +73,6 @@ class EventsController < ApplicationController
       return
     end
 
-    # Check if recipient is already added to this event
     existing = @event.event_recipients.find_by(recipient_id: recipient.id)
 
     if existing
@@ -101,7 +91,6 @@ class EventsController < ApplicationController
     end
   end
 
-  # NEW ACTION: Remove a recipient from the event
   def remove_recipient
     event_recipient = @event.event_recipients.find_by(id: params[:event_recipient_id])
 

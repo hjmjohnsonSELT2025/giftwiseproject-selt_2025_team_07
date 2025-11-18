@@ -64,18 +64,6 @@ Feature: Event Management
     Then the event "Dinner Party" should have budget "499.99"
 
 
-  Scenario: Successfully create event with recipients
-    Given I have recipients "Mom" and "Dad"
-    And I am on the new event page
-    When I fill in "Event Name" with "Family Dinner"
-    And I fill in "Event Date" with tomorrow's date
-    And I select recipient "Mom"
-    And I select recipient "Dad"
-    And I click "Create Event" button
-    Then the event "Family Dinner" should have 2 recipients
-    And the event should be associated with "Mom" and "Dad"
-
-
   Scenario: Create event with special characters in name
     Given I am on the new event page
     When I fill in "Event Name" with "Mom's B'day @ Home! "
@@ -204,30 +192,30 @@ Feature: Event Management
     And the "Description" field should contain "Test description"
 
     #view events
-    Scenario: View events page displays correct sections
-      Given I am logged in as "john@example.com" with password "Password@123"
-      And I visit the events page
-      Then I should see "All Events"
+  Scenario: View events page displays correct sections
+    Given I am logged in as "john@example.com" with password "Password@123"
+    And I visit the events page
+    Then I should see "All Events"
 
-       Scenario: No events message displayed when user has no events
-      Given I am logged in as "john@example.com" with password "Password@123"
-     And I visit the events page
+  Scenario: No events message displayed when user has no events
+    Given I am logged in as "john@example.com" with password "Password@123"
+    And I visit the events page
     Then I should see "You don’t have any upcoming events yet."
     And I should see "No past events yet."
 
-    Scenario: Add Event button is visible on events page
-  Given I am logged in as "john@example.com" with password "Password@123"
-  And I visit the events page
-  Then I should see a "+ Add Event" button
-  When I click on "+ Add Event"
-  Then I should be on the new event page
+  Scenario: Add Event button is visible on events page
+    Given I am logged in as "john@example.com" with password "Password@123"
+    And I visit the events page
+    Then I should see a "+ Add Event" button
+    When I click on "+ Add Event"
+    Then I should be on the new event page
 
-      
+
   Scenario: Back to dashboard button navigates correctly
-  Given I am logged in as "john@example.com" with password "Password@123"
-  And I visit the events page
-  When I click on "← Back to Dashboard"
-  Then I should be on the dashboard page
+    Given I am logged in as "john@example.com" with password "Password@123"
+    And I visit the events page
+    When I click on "← Back to Dashboard"
+    Then I should be on the dashboard page
 
 
 

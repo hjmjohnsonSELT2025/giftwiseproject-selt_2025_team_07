@@ -1,8 +1,8 @@
 <div class="min-h-screen bg-[#f5f5fb]">
-  <!-- NAVBAR -->
   <header class="w-full bg-white shadow-sm">
     <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-      <div class="flex items-center gap-2">
+      <%= link_to(current_user.present? ? dashboard_path : root_path,
+                  class: "flex items-center gap-2 hover:opacity-90 transition") do %>
         <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg"
                viewBox="0 0 24 24"
@@ -20,20 +20,70 @@
           </svg>
         </div>
         <span class="text-xl font-semibold tracking-tight">GiftWise</span>
-      </div>
+      <% end %>
 
-      <nav class="flex items-center gap-6 text-sm font-medium">
-        <span class="text-gray-700">Welcome, <%= current_user.name %>!</span>
-        <%= button_to "Log Out",
-                      logout_path,
-                      method: :delete,
-                      class: "px-5 py-2 rounded-full bg-black text-white hover:bg-gray-900 transition" %>
+
+      <nav class="flex items-center gap-4 text-sm font-medium">
+
+        <div class="relative" data-controller="dropdown">
+          <button
+            type="button"
+            data-action="click->dropdown#toggle"
+            class="w-9 h-9 rounded-full bg-[#f4e6ff] flex items-center justify-center
+             hover:bg-[#e9d5ff] transition shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24"
+                 class="w-5 h-5 text-[#a855f7]"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3"></circle>
+              <path d="M6 19c0-3 2.5-5 6-5s6 2 6 5"></path>
+            </svg>
+          </button>
+
+          <div
+            data-dropdown-target="menu"
+            class="hidden absolute left-0 mt-3 w-64 origin-top-left rounded-2xl bg-white
+         shadow-lg border border-gray-200 py-2 z-50"
+          >
+            <div class="px-4 pb-2 border-b border-gray-100 mb-2">
+              <p class="text-sm font-semibold text-gray-900 truncate">
+                <%= current_user.name %>
+              </p>
+              <% if current_user.respond_to?(:email) && current_user.email.present? %>
+                <p class="text-xs text-gray-500 truncate">
+                  <%= current_user.email %>
+                </p>
+              <% end %>
+            </div>
+
+            <%= link_to "Edit Profile",
+                        edit_profile_path,
+                        class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap" %>
+
+            <%= link_to "Change password",
+                        edit_password_path,
+                        class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap" %>
+
+            <div class="mt-2 pt-2 border-t border-gray-100">
+              <%= button_to "Log Out",
+                            logout_path,
+                            method: :delete,
+                            class: "w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 whitespace-nowrap" %>
+            </div>
+          </div>
+        </div>
       </nav>
+
     </div>
   </header>
 
   <div class="max-w-6xl mx-auto px-6 py-10 pb-24">
-    <!-- Top bar: back + title + add -->
+
     <div class="flex items-center justify-between mb-8">
       <div class="flex items-center gap-4">
         <%= link_to "← Back to Dashboard",
@@ -47,7 +97,6 @@
                   class: "inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
     </div>
 
-    <!-- Upcoming events -->
     <section class="mb-10">
       <h2 class="text-lg font-semibold mb-3">Upcoming Events</h2>
 
@@ -118,8 +167,6 @@
       <% end %>
     </section>
 
-
-    <!-- Past events -->
     <section>
       <h2 class="text-lg font-semibold mb-3">Past Events</h2>
 
@@ -174,7 +221,6 @@
 
   </div>
 
-  <!-- Floating + button bottom-right -->
   <div class="fixed bottom-8 right-8">
     <%= link_to "+",
                 new_event_path,

@@ -74,10 +74,18 @@ When('I fill in {string} with a future date {string}') do |field, date|
   fill_in field, with: date
 end
 
-Given('I have recipients {string} and {string}') do |r1, r2|
-  @user.recipients.create!(name: r1)
-  @user.recipients.create!(name: r2)
+Given("I have recipients {string} and {string}") do |name1, name2|
+  user = User.find_by!(email: "john@example.com")
+
+  [name1, name2].each_with_index do |name, idx|
+    Recipient.create!(
+      user:   user,
+      name:   name,
+      email:  "#{name.parameterize}-#{idx + 1}@example.com"
+    )
+  end
 end
+
 
 When('I select recipient {string}') do |name|
   check name
