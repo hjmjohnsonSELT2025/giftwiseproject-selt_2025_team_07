@@ -94,7 +94,7 @@ RSpec.describe "/events", type: :request do
 
       it "renders a response with 422 status (to display the 'new' template)" do
         post events_url, params: { event: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
@@ -128,7 +128,7 @@ RSpec.describe "/events", type: :request do
       it "renders a response with 422 status (to display the 'edit' template)" do
         event = Event.create!(valid_attributes.merge(user: user))
         patch event_url(event), params: { event: invalid_attributes }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end

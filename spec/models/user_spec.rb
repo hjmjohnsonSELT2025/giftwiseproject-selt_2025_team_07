@@ -4,6 +4,7 @@ RSpec.describe User, type: :model do
   describe 'associations' do
     it { should have_many(:recipients).dependent(:destroy) }
     it { should have_many(:events).dependent(:destroy) }
+    it { should have_many(:authentications).dependent(:destroy) }
   end
 
   describe 'validations' do
@@ -46,6 +47,12 @@ RSpec.describe User, type: :model do
     it 'rejects password shorter than 8 characters' do
       user = User.new(name: 'Test', email: 'test@example.com', password: 'Pass1!')
       expect(user).not_to be_valid
+    end
+
+    it 'allows OAuth users without password' do
+      user = User.new(name: 'Test', email: 'test@example.com')
+      user.skip_password_validation = true
+      expect(user).to be_valid
     end
   end
 
@@ -122,6 +129,13 @@ RSpec.describe User, type: :model do
     it 'does not authenticate with incorrect password' do
       user = User.create!(name: 'Test User', email: 'test@example.com', password: 'Password1!')
       expect(user.authenticate('wrongpassword')).to be_falsey
+    end
+
+    it 'returns false when user has no password' do
+      user = User.new(name: 'OAuth User', email: 'oauth@example.com')
+      user.skip_password_validation = true
+      user.save!
+      expect(user.authenticate('anypassword')).to be_falsey
     end
   end
 
@@ -230,6 +244,121 @@ RSpec.describe User, type: :model do
     it 'returns nil when date of birth is not set' do
       user = User.create!(name: 'Test', email: 'test@example.com', password: 'Password1!')
       expect(user.age).to be_nil
+    end
+  end
+
+  describe '.from_omniauth' do
+    let(:auth_hash) do
+      OmniAuth::AuthHash.new({
+                               provider: 'google_oauth2',
+                               uid: '123456',
+                               info: {
+                                 email: 'oauth@example.com',
+                                 name: 'OAuth User'
+                               }
+                             })
+    end
+
+    context 'when user does not exist' do
+      it 'creates a new user' do
+        expect {
+          User.from_omniauth(auth_hash)
+        }.to change(User, :count).by(1)
+      end
+
+      it 'creates user with correct attributes' do
+        user = User.from_omniauth(auth_hash)
+        expect(user.name).to eq('OAuth User')
+        expect(user.email).to eq('oauth@example.com')
+        expect(user.has_password?).to be_falsey
+      end
+
+      it 'creates authentication record' do
+        user = User.from_omniauth(auth_hash)
+        expect(user.authentications.count).to eq(1)
+        expect(user.authentications.first.provider).to eq('google_oauth2')
+        expect(user.authentications.first.uid).to eq('123456')
+      end
+
+      it 'downcases email' do
+        auth_hash.info.email = 'OAUTH@EXAMPLE.COM'
+        user = User.from_omniauth(auth_hash)
+        expect(user.email).to eq('oauth@example.com')
+      end
+    end
+
+    context 'when user exists with same email' do
+      let!(:existing_user) do
+        User.create!(name: 'Existing', email: 'oauth@example.com', password: 'Password1!')
+      end
+
+      it 'does not create a new user' do
+        expect {
+          User.from_omniauth(auth_hash)
+        }.not_to change(User, :count)
+      end
+
+      it 'returns the existing user' do
+        user = User.from_omniauth(auth_hash)
+        expect(user.id).to eq(existing_user.id)
+      end
+
+      it 'creates authentication record for existing user' do
+        user = User.from_omniauth(auth_hash)
+        expect(user.authentications.count).to eq(1)
+        expect(user.authentications.first.provider).to eq('google_oauth2')
+      end
+
+      it 'does not duplicate authentication records' do
+        User.from_omniauth(auth_hash)
+        user = User.from_omniauth(auth_hash)
+        expect(user.authentications.count).to eq(1)
+      end
+    end
+
+    context 'when user has multiple OAuth providers' do
+      let!(:existing_user) do
+        user = User.new(name: 'Multi OAuth', email: 'multi@example.com')
+        user.skip_password_validation = true
+        user.save!
+        user.authentications.create!(provider: 'github', uid: '999', email: 'multi@example.com', name: 'Multi OAuth')
+        user
+      end
+
+      it 'adds new provider authentication' do
+        user = User.from_omniauth(auth_hash.merge(info: { email: 'multi@example.com', name: 'Multi OAuth' }))
+        expect(user.authentications.count).to eq(2)
+        expect(user.authentications.pluck(:provider)).to contain_exactly('github', 'google_oauth2')
+      end
+    end
+  end
+
+  describe '#has_password?' do
+    it 'returns true when user has password' do
+      user = User.create!(name: 'Test', email: 'test@example.com', password: 'Password1!')
+      expect(user.has_password?).to be_truthy
+    end
+
+    it 'returns false when user has no password' do
+      user = User.new(name: 'OAuth User', email: 'oauth@example.com')
+      user.skip_password_validation = true
+      user.save!
+      expect(user.has_password?).to be_falsey
+    end
+  end
+
+  describe '#oauth_user?' do
+    it 'returns true when user has OAuth authentications' do
+      user = User.new(name: 'OAuth User', email: 'oauth@example.com')
+      user.skip_password_validation = true
+      user.save!
+      user.authentications.create!(provider: 'google_oauth2', uid: '123', email: 'oauth@example.com', name: 'OAuth User')
+      expect(user.oauth_user?).to be_truthy
+    end
+
+    it 'returns false when user has no OAuth authentications' do
+      user = User.create!(name: 'Regular User', email: 'regular@example.com', password: 'Password1!')
+      expect(user.oauth_user?).to be_falsey
     end
   end
 end

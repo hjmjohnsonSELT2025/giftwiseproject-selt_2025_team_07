@@ -35,7 +35,11 @@ When('I fill in {string} with {string}') do |field, value|
 end
 
 When('I click {string}') do |button_or_link|
-  click_link_or_button button_or_link, match: :first
+  if button_or_link == "Continue with Google"
+    @initiating_google_oauth = true
+  else
+    click_link_or_button button_or_link, match: :first
+  end
 end
 
 When('I visit the home page') do
@@ -66,11 +70,90 @@ Then('I should be redirected to the dashboard') do
   expect(current_path).to eq(dashboard_path)
 end
 
-
 Given('I am on the dashboard page') do
   visit dashboard_path
 end
 
 When('I select {string} from {string}') do |option, field|
   select option, from: field
+end
+
+Given('a Google user exists with email {string} and name {string}') do |email, name|
+  user = User.new(name: name, email: email)
+  user.skip_password_validation = true
+  user.save!
+  user.authentications.create!(
+    provider: 'google_oauth2',
+    uid: Digest::SHA256.hexdigest(email),
+    email: email,
+    name: name
+  )
+end
+
+And('Google authentication succeeds with email {string} and name {string}') do |email, name|
+  OmniAuth.config.test_mode = true
+  OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
+                                                                       provider: 'google_oauth2',
+                                                                       uid: Digest::SHA256.hexdigest(email),
+                                                                       info: {
+                                                                         email: email,
+                                                                         name: name
+                                                                       }
+                                                                     })
+
+  visit '/auth/google_oauth2/callback'
+end
+
+When('Google authentication fails') do
+  OmniAuth.config.test_mode = true
+  OmniAuth.config.mock_auth[:google_oauth2] = :invalid_credentials
+  visit '/auth/google_oauth2/callback'
+end
+
+Then('a user should exist with email {string}') do |email|
+  expect(User.find_by(email: email)).to be_present
+end
+
+Then('the user {string} should have no password') do |email|
+  user = User.find_by(email: email)
+  expect(user.has_password?).to be_falsey
+end
+
+Then('the user {string} should have a Google authentication') do |email|
+  user = User.find_by(email: email)
+  expect(user.authentications.where(provider: 'google_oauth2')).to exist
+end
+
+Given('I am logged in as Google user {string}') do |email|
+  user = User.find_by(email: email)
+  OmniAuth.config.test_mode = true
+  OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
+     provider: 'google_oauth2',
+     uid: user.authentications.first.uid,
+     info: {
+       email: email,
+       name: user.name
+     }
+   })
+
+  visit '/auth/google_oauth2/callback'
+end
+
+When('I visit the change password page') do
+  visit edit_password_path
+end
+
+Then('the user {string} should have a password') do |email|
+  user = User.find_by(email: email)
+  expect(user.has_password?).to be_truthy
+end
+
+Given('the user {string} has linked their Google account') do |email|
+  user = User.find_by(email: email)
+  user.authentications.create!(
+    provider: 'google_oauth2',
+    uid: Digest::SHA256.hexdigest(email),
+    email: email,
+    name: user.name
+  )
 end

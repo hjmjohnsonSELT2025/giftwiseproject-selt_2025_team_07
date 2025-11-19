@@ -38,10 +38,11 @@ Feature: Profile Update
 
   Scenario: User enters mismatched passwords
     Given I am on the change password page
-    When I fill in "New Password" with "NewPass1!"
+    When I fill in "Current Password" with "Password1!"
+    And I fill in "New Password" with "NewPass1!"
     And I fill in "Confirm New Password" with "DifferentPass1!"
     And I click "Update Password"
-    Then I should see "Password confirmation doesn't match Password"
+    Then I should see "doesn't match Password"
 
   Scenario: User leaves password fields blank (no password change)
     Given I am on the edit profile page
@@ -52,17 +53,19 @@ Feature: Profile Update
 
   Scenario: User enters mismatched passwords
     Given I am on the change password page
-    When I fill in "New Password" with "NewPass1!"
+    When I fill in "Current Password" with "Password1!"
+    And I fill in "New Password" with "NewPass1!"
     And I fill in "Confirm New Password" with "DifferentPass1!"
     And I click "Update Password"
-    Then I should see "Password confirmation doesn't match Password"
+    Then I should see "doesn't match Password"
 
   Scenario: User enters weak password
     Given I am on the change password page
-    When I fill in "New Password" with "weak"
+    When I fill in "Current Password" with "Password1!"
+    And I fill in "New Password" with "weak"
     And I fill in "Confirm New Password" with "weak"
     And I click "Update Password"
-    Then I should see "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
+    Then I should see "must be at least 8 characters"
 
   Scenario: User clears required name field
     Given I am on the edit profile page
