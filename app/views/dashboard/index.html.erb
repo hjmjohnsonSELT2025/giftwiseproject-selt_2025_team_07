@@ -27,6 +27,21 @@
           Welcome, <%= current_user.name.presence || "there" %>!
         </span>
 
+        <%= link_to wishlists_path,
+                    class: "w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#fee2e2] transition",
+                    title: "Wishlist" do %>
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               class="w-5 h-5"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round">
+            <path d="M20.8 5.5a5.5 5.5 0 0 0-7.8 0L12 6.5l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-6.7 1-1a5.5 5.5 0 0 0 0-7.8z"></path>
+          </svg>
+        <% end %>
+
         <div class="relative" data-controller="dropdown">
           <button
             type="button"
