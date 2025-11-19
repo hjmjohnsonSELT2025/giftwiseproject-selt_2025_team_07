@@ -27,6 +27,25 @@
         </div>
       <% end %>
 
+      <%= button_to "/auth/google_oauth2", method: :post, data: { turbo: false }, class: "w-full mb-6 px-6 py-3 rounded-full border-2 border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-3" do %>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10.2V12.05H15.5818C15.3364 13.3 14.5909 14.3591 13.4727 15.0682V17.5773H16.7636C18.6727 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
+          <path d="M10.2 20C12.9 20 15.1727 19.1045 16.7636 17.5773L13.4727 15.0682C12.5318 15.6682 11.3409 16.0227 10.2 16.0227C7.59545 16.0227 5.38182 14.2636 4.55909 11.9H1.15909V14.4909C2.73636 17.6318 6.20909 20 10.2 20Z" fill="#34A853"/>
+          <path d="M4.55909 11.9C4.35909 11.3 4.24545 10.6591 4.24545 10C4.24545 9.34091 4.35909 8.7 4.55909 8.1V5.50909H1.15909C0.481818 6.85909 0.0909091 8.38636 0.0909091 10C0.0909091 11.6136 0.481818 13.1409 1.15909 14.4909L4.55909 11.9Z" fill="#FBBC05"/>
+          <path d="M10.2 3.97727C11.4591 3.97727 12.5864 4.40909 13.4636 5.24091L16.3909 2.31364C15.1682 1.18636 12.9045 0 10.2 0C6.20909 0 2.73636 2.36818 1.15909 5.50909L4.55909 8.1C5.38182 5.73636 7.59545 3.97727 10.2 3.97727Z" fill="#EA4335"/>
+        </svg>
+        Sign up with Google
+      <% end %>
+
+      <div class="relative mb-6">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-4 bg-white text-gray-500">Or sign up with email</span>
+        </div>
+      </div>
+
       <%= form_with model: @user, url: signup_path, class: "space-y-6" do |f| %>
         <div class="grid md:grid-cols-2 gap-6">
           <div>

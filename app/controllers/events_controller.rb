@@ -30,7 +30,7 @@ class EventsController < ApplicationController
       redirect_to dashboard_path, notice: "Event '#{@event.event_name}' created successfully!"
     else
       @recipients = current_user.recipients
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -61,7 +61,7 @@ class EventsController < ApplicationController
       redirect_to event_path(@event), notice: "Event updated successfully!"
     else
       @recipients = current_user.recipients
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

@@ -9,6 +9,10 @@ Rails.application.routes.draw do
   delete "logout", to: "sessions#destroy"
   get    "logout", to: "sessions#destroy"
 
+  get 'auth/:provider/callback', to: 'sessions#omniauth'
+  post 'auth/:provider/callback', to: 'sessions#omniauth'
+  get 'auth/failure', to: 'sessions#auth_failure'
+
   get "dashboard", to: "dashboard#index"
 
   resource :profile, only: [:edit, :update]

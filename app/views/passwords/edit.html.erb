@@ -114,10 +114,24 @@
         </div>
       </div>
 
-      <h1 class="text-3xl font-semibold text-center mb-2">Change Password</h1>
+      <h1 class="text-3xl font-semibold text-center mb-2">
+        <%= @user.has_password? ? "Change Password" : "Set Password" %>
+      </h1>
       <p class="text-gray-600 text-center mb-8">
-        Update the password for your GiftWise account.
+        <% if @user.has_password? %>
+          Update the password for your GiftWise account.
+        <% else %>
+          Set a password to enable email/password login for your account.
+        <% end %>
       </p>
+
+      <% if @user.oauth_user? && !@user.has_password? %>
+        <div class="mb-6 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200">
+          <p class="text-sm text-blue-700">
+            Your account was created with Google. Setting a password will allow you to login with both Google and email/password.
+          </p>
+        </div>
+      <% end %>
 
       <% if @user && @user.errors.any? %>
         <div class="mb-6 px-4 py-3 rounded-lg bg-red-50 border border-red-200">
@@ -136,7 +150,54 @@
                     local: true,
                     class: "space-y-6" do |f| %>
 
-        <!-- New Password with eye icon -->
+        <% if @user.has_password? %>
+          <div>
+            <%= f.label :current_password, "Current Password",
+                        class: "block text-sm font-medium text-gray-700 mb-2" %>
+
+            <div data-controller="password-visibility"
+                 class="flex items-center px-4 py-3 rounded-lg border border-gray-300
+                        focus-within:ring-2 focus-within:ring-[#a855f7]
+                        focus-within:border-transparent transition">
+              <%= f.password_field :current_password,
+                                   required: true,
+                                   autocomplete: "current-password",
+                                   class: "flex-1 border-none focus:outline-none",
+                                   data: { "password-visibility-target": "input" } %>
+
+              <button
+                type="button"
+                data-action="click->password-visibility#toggle"
+                class="px-3 text-gray-400 hover:text-gray-600"
+                aria-label="Toggle password visibility"
+              >
+                <svg data-password-visibility-target="iconOn"
+                     xmlns="http://www.w3.org/2000/svg"
+                     class="w-5 h-5"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor"
+                     stroke-width="2">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+
+                <svg data-password-visibility-target="iconOff"
+                     xmlns="http://www.w3.org/2000/svg"
+                     class="w-5 h-5 hidden"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor"
+                     stroke-width="2">
+                  <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-5.94"/>
+                  <path d="M1 1l22 22"/>
+                  <path d="M9.88 9.88A3 3 0 0 0 12 15a3 3 0 0 0 2.12-.88"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        <% end %>
+
         <div>
           <%= f.label :password, "New Password",
                       class: "block text-sm font-medium text-gray-700 mb-2" %>
@@ -183,7 +244,6 @@
           </div>
         </div>
 
-        <!-- Confirm New Password with eye icon -->
         <div>
           <%= f.label :password_confirmation, "Confirm New Password",
                       class: "block text-sm font-medium text-gray-700 mb-2" %>
@@ -234,7 +294,7 @@
           <%= link_to "Cancel", dashboard_path,
                       class: "flex-1 px-6 py-3 rounded-full border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition text-center" %>
 
-          <%= f.submit "Update Password",
+          <%= f.submit (@user.has_password? ? "Update Password" : "Set Password"),
                        class: "flex-1 px-8 py-3 rounded-full bg-black text-white font-semibold hover:bg-gray-900 transition cursor-pointer" %>
         </div>
       <% end %>
