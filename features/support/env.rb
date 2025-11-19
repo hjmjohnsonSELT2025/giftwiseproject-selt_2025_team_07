@@ -58,3 +58,12 @@ end
 # See https://github.com/cucumber/cucumber-rails/blob/master/features/choose_javascript_database_strategy.feature
 Cucumber::Rails::Database.javascript_strategy = :truncation
 
+# Enable RSpec mocks in Cucumber so we can use `allow`, `instance_double`, etc.
+require "rspec/mocks"
+
+World(RSpec::Mocks::ExampleMethods)
+
+After do
+  # Reset mocks between scenarios
+  RSpec::Mocks.space.reset_all
+end

@@ -11,7 +11,6 @@ RSpec.describe AiGiftSuggestionsController, type: :controller do
   let(:fake_suggester) { instance_double(Ai::GiftSuggester, call: [AiGiftSuggestion.new(title: "Test Idea", user: user, event: event, recipient: recipient, event_recipient: event_recipient)]) }
 
   before do
-    # Stub current_user helper if your ApplicationController uses it
     allow(controller).to receive(:current_user).and_return(user)
   end
 
@@ -53,6 +52,39 @@ RSpec.describe AiGiftSuggestionsController, type: :controller do
 
       expect(response).to redirect_to(event_ai_gift_suggestions_path(event))
       expect(flash[:notice]).to match(/Generated 1 ideas for/)
+    end
+  end
+
+  describe "POST #toggle_wishlist" do
+    let!(:idea) do
+      AiGiftSuggestion.create!(
+        user: user,
+        event: event,
+        recipient: recipient,
+        event_recipient: event_recipient,
+        title: "Toggle Gift",
+        saved_to_wishlist: false
+      )
+    end
+
+    it "toggles saved_to_wishlist from false to true" do
+      post :toggle_wishlist, params: { event_id: event.id, id: idea.id }
+
+      idea.reload
+      expect(idea.saved_to_wishlist).to be true
+      expect(response).to redirect_to(event_ai_gift_suggestions_path(event))
+      expect(flash[:notice]).to match(/Added/)
+    end
+
+    it "toggles saved_to_wishlist from true to false" do
+      idea.update!(saved_to_wishlist: true)
+
+      post :toggle_wishlist, params: { event_id: event.id, id: idea.id }
+
+      idea.reload
+      expect(idea.saved_to_wishlist).to be false
+      expect(response).to redirect_to(event_ai_gift_suggestions_path(event))
+      expect(flash[:notice]).to match(/Removed/)
     end
   end
 end
