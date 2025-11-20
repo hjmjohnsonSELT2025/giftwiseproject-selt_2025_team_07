@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: 'noreply@giftwise.com'
+  default from: 'noreply@mygiftwise.online'
   layout 'mailer'
 end

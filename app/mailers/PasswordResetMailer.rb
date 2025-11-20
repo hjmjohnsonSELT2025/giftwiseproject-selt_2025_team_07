@@ -1,5 +1,5 @@
 class PasswordResetMailer < ApplicationMailer
-  default from: 'noreply@giftwise.com'
+  default from: 'noreply@mygiftwise.online'
 
   def reset_email(user, token)
     @user = user
