@@ -1,114 +1,88 @@
 # features/step_definitions/ai_gift_suggestions_steps_nodup.rb
 
-Given('I have an event {string} with a recipient {string}') do |event_name, recipient_name|
-  # Background has already created the user with this email and logged you in
-  user = User.find_by!(email: "test@example.com")
+# ---------- Shared setup ----------
 
-  event = user.events.create!(
+Given("I have an event {string} with a recipient {string}") do |event_name, recipient_name|
+  @user = User.find_by!(email: "test@example.com")
+
+  @event = @user.events.create!(
     event_name: event_name,
     event_date: Date.today + 7.days,
-    budget: 120
+    budget: 100
   )
 
-  recipient = user.recipients.create!(
+  @recipient = @user.recipients.create!(
     name:         recipient_name,
-    relationship: "Friend",
-    age:          25,
-    hobbies:      "Reading",
-    likes:        "Books",
-    dislikes:     "None"
+    relationship: "Friend"
   )
 
   EventRecipient.create!(
-    user:            user,
-    event:           event,
-    recipient:       recipient,
-    budget_allocated: 60
+    user:             @user,
+    event:            @event,
+    recipient:        @recipient,
+    budget_allocated: 50
   )
-
-  @current_user = user
-  @event        = event
-  @recipient    = recipient
 end
 
-Given('AI gift suggestions already exist for {string} on {string}:') do |recipient_name, event_name, table|
-  user  = @current_user || User.find_by!(email: "test@example.com")
-  event = @event || user.events.find_by!(event_name: event_name)
-  recipient = @recipient || user.recipients.find_by!(name: recipient_name)
-
-  event_recipient = EventRecipient.find_by!(
-    user:      user,
-    event:     event,
-    recipient: recipient
-  )
+Given("AI gift suggestions already exist for {string} on {string}:") do |recipient_name, event_name, table|
+  user      = User.find_by!(email: "test@example.com")
+  event     = user.events.find_by!(event_name: event_name)
+  recipient = user.recipients.find_by!(name: recipient_name)
+  event_recipient = EventRecipient.find_by!(user: user, event: event, recipient: recipient)
 
   table.hashes.each do |row|
     AiGiftSuggestion.create!(
-      user:            user,
-      event:           event,
-      recipient:       recipient,
-      event_recipient: event_recipient,
-      title:           row.fetch("title"),
-      description:     "Existing suggestion for testing",
-      estimated_price: "$10–$20",
-      category:        "Test",
-      special_notes:   nil,
-      round_type:      "initial"
+      user:              user,
+      event:             event,
+      recipient:         recipient,
+      event_recipient:   event_recipient,
+      round_type:        "initial",
+      title:             row["title"],
+      description:       row["description"],
+      category:          row["category"],
+      estimated_price:   row["estimated_price"],
+      saved_to_wishlist: row["saved_to_wishlist"].to_s == "true"
     )
   end
-
-  @event_recipient = event_recipient
 end
 
-When('I go to the AI gift suggestions page for {string}') do |event_name|
-  user  = @current_user || User.find_by!(email: "test@example.com")
+# ---------- No-duplicate regeneration scenario ----------
+
+When("I go to the AI gift suggestions page for {string}") do |event_name|
+  user  = User.find_by!(email: "test@example.com")
+  event = user.events.find_by!(event_name: event_name)
+  visit event_ai_gift_suggestions_path(event)
+end
+
+When("I click {string} for {string}") do |text, _recipient_name|
+  # click_on works for both <button> and <a> links with that text
+  click_on text
+end
+
+Then("I should see {int} AI gift ideas for {string}") do |count, _recipient_name|
+  # Each AI idea card on the event ideas page should have this class.
+  # If your view uses a different class, either change it there or adjust this selector.
+  expect(page).to have_css(".ai-gift-card", count: count)
+end
+
+# ---------- AI Library scenario ----------
+
+When("I visit the AI gift library") do
+  visit ai_gift_library_path
+end
+
+When("I filter the AI library by event {string} and recipient {string} and saved only") do |event_name, recipient_name|
+  user  = User.find_by!(email: "test@example.com")
   event = user.events.find_by!(event_name: event_name)
 
-  visit event_ai_gift_suggestions_path(event)
+  # Build the exact option label used in the view:
+  # "#{e.event_name} (#{e.event_date&.strftime('%b %d')})"
+  event_label = "#{event.event_name} (#{event.event_date&.strftime('%b %d')})"
+
+  # Select boxes are identified by their field IDs (event_id, recipient_id)
+  select(event_label, from: "event_id")
+  select(recipient_name, from: "recipient_id")
+
+  check("Saved to wishlist only")
+  click_button("Apply filters")
 end
-
-When('I click {string} for {string}') do |_button_text, recipient_name|
-  user  = @current_user || User.find_by!(email: "test@example.com")
-  event = @event || user.events.first
-  recipient = @recipient || user.recipients.find_by!(name: recipient_name)
-
-  event_recipient = @event_recipient || EventRecipient.find_by!(
-    user:      user,
-    event:     event,
-    recipient: recipient
-  )
-
-  # Simulate clicking the "Regenerate ideas" button by posting directly
-  # to the AiGiftSuggestionsController#create action with round_type=regenerate
-  page.driver.submit :post, event_ai_gift_suggestions_path(event), {
-    recipient_id: event_recipient.recipient_id,
-    round_type:   "regenerate",
-    from:         nil
-  }
-
-  # After regenerate, the app redirects back to the AI suggestions page,
-  # so we visit it again to reflect the new state.
-  visit event_ai_gift_suggestions_path(event)
-end
-
-
-Then('I should see {int} AI gift ideas for {string}') do |expected_count, recipient_name|
-  user  = @current_user || User.find_by!(email: "test@example.com")
-  event = @event || user.events.first
-  recipient = user.recipients.find_by!(name: recipient_name)
-
-  event_recipient = @event_recipient || EventRecipient.find_by!(
-    user:      user,
-    event:     event,
-    recipient: recipient
-  )
-
-  # Only count the newly regenerated ideas, not the old initial ones
-  count = AiGiftSuggestion.where(
-    event_recipient: event_recipient,
-    round_type:      "regenerate"
-  ).count
-
-  expect(count).to eq(expected_count)
-end
-

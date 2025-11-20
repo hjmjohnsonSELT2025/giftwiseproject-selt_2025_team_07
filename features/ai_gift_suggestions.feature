@@ -30,3 +30,14 @@ Feature: AI gift suggestions
     And I should not see "Cozy Blanket"
     And I should not see "Wireless Mouse"
 
+  Scenario: Browsing AI gift library with filters
+    # Background already logs me in as test@example.com
+    Given I have an event "Birthday" with a recipient "Alex"
+    And AI gift suggestions already exist for "Alex" on "Birthday":
+      | title        | category | saved_to_wishlist |
+      | Smartwatch   | Tech     | true              |
+      | Garden Book  | Books    | false             |
+    When I visit the AI gift library
+    And I filter the AI library by event "Birthday" and recipient "Alex" and saved only
+    Then I should see "Smartwatch"
+    And I should not see "Garden Book"
