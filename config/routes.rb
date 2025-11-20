@@ -11,6 +11,8 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#index"
 
+  get "/ai_gift_library", to: "ai_gift_suggestions#library", as: :ai_gift_library
+
   resource :profile, only: [:edit, :update]
 
   resource :password, only: [:edit, :update]

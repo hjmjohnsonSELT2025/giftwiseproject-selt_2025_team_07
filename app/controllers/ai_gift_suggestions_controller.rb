@@ -1,6 +1,6 @@
 class AiGiftSuggestionsController < ApplicationController
-  # before_action :require_login
-  before_action :set_event
+  before_action :authenticate_user!
+  before_action :set_event, except: :library
   before_action :set_event_recipient, only: :create
   before_action :set_ai_gift_suggestion, only: :toggle_wishlist
 
@@ -11,8 +11,7 @@ class AiGiftSuggestionsController < ApplicationController
                         .includes(:recipient)
                         .order(created_at: :desc)
 
-    @suggestions_by_recipient =
-      suggestions.group_by(&:recipient_id)
+    @suggestions_by_recipient = suggestions.group_by(&:recipient_id)
   end
 
   def create
@@ -45,9 +44,45 @@ class AiGiftSuggestionsController < ApplicationController
     when "wishlist"
       redirect_to wishlists_path, notice: message
     else
-      # default: stay on AI ideas for this event
       redirect_to event_ai_gift_suggestions_path(@event, from: params[:from]), notice: message
     end
+  end
+
+  def library
+    @events = current_user.events.order(:event_date, :event_name)
+
+    @selected_event_id     = params[:event_id].presence
+    @selected_recipient_id = params[:recipient_id].presence
+    @selected_category     = params[:category].presence
+    @saved_only            = params[:saved_only] == "1"
+    @sort                  = params[:sort].presence || "newest"
+
+    @recipients =
+      if @selected_event_id
+        Recipient.joins(:event_recipients)
+                 .where(event_recipients: { user_id: current_user.id, event_id: @selected_event_id })
+                 .distinct
+                 .order(:name)
+      else
+        current_user.recipients.order(:name)
+      end
+
+    @suggestions = AiGiftSuggestion
+                     .where(user: current_user)
+                     .includes(:event, :recipient)
+
+    @suggestions = @suggestions.where(event_id: @selected_event_id) if @selected_event_id
+    @suggestions = @suggestions.where(recipient_id: @selected_recipient_id) if @selected_recipient_id
+    @suggestions = @suggestions.where(category: @selected_category) if @selected_category
+    @suggestions = @suggestions.where(saved_to_wishlist: true) if @saved_only
+
+    @suggestions =
+      case @sort
+      when "oldest"
+        @suggestions.order(created_at: :asc)
+      else
+        @suggestions.order(created_at: :desc)
+      end
   end
 
   private

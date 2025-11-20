@@ -177,24 +177,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
     t.index ["user_id"], name: "index_recipients_on_user_id"
   end
 
-  create_table "temporary_gifts", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "gift_type"
-    t.string "gift_idea", null: false
-    t.text "description"
-    t.decimal "price_estimate"
-    t.string "link"
-    t.string "gift_name", null: false
-    t.decimal "price"
-    t.string "category"
-    t.string "purchase_link"
-    t.date "given_on"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "event"
-    t.index ["user_id"], name: "index_temporary_gifts_on_user_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -243,7 +225,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
   add_foreign_key "notifications", "users"
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "recipients", "users"
-  add_foreign_key "temporary_gifts", "users"
   add_foreign_key "wishlists", "recipients"
   add_foreign_key "wishlists", "users"
 end
