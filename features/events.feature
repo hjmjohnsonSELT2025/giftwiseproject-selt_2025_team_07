@@ -215,3 +215,15 @@ Feature: Event Management
     And I visit the events page
     When I click on "← Back to Dashboard"
     Then I should be on the dashboard page
+
+
+  Scenario: Required fields on the event form show a red asterisk
+    Given I am on the new event page
+    Then I should see "Event Name *"
+    And I should see "Event Date *"
+
+  Scenario: Required fields on the edit event form show a red asterisk
+    Given I am on the edit event page for "Some Event"
+    Then I should see "Event Name *"
+    And I should see "Event Date *"
+

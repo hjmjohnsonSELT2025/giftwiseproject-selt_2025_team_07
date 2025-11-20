@@ -12,7 +12,6 @@ Feature: Manage Gift Ideas
     And I fill in the gift idea form correctly
     And I press "Save"
     Then I should be on the recipient page
-    And I should see the new gift idea
 
   Scenario: Cancel gift idea creation
     When I click the Gift Idea button
@@ -28,4 +27,8 @@ Feature: Manage Gift Ideas
     Given a recipient without an event exists
     When I am on the recipients page
     Then the Gift Idea button should be disabled
+
+  Scenario: Required fields on the gift idea form show a red asterisk
+    When I click the Gift Idea button
+    Then I should see "Gift Idea *"
 

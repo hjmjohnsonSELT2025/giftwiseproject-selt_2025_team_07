@@ -1,11 +1,5 @@
-# features/step_definitions/gift_ideas_steps.rb
-
-# ================================
-# GIVENs
-# ================================
-
 Given("a recipient with an event exists") do
-  # Create a valid user (matches your password regex)
+  # User for these scenarios
   @user = User.create!(
     name: "John Doe",
     email: "john_gift_ideas@example.com",
@@ -16,6 +10,7 @@ Given("a recipient with an event exists") do
   # Recipient belongs to user
   @recipient = Recipient.create!(
     name: "Sam",
+    email: "sam@example.com",
     relationship: "Friend",
     user: @user
   )
@@ -27,23 +22,21 @@ Given("a recipient with an event exists") do
     user: @user
   )
 
-  # EventRecipient belongs to event, recipient AND user
-  @event_recipient = EventRecipient.create!(
+  # Link event + recipient
+  EventRecipient.create!(
     user: @user,
     event: @event,
     recipient: @recipient
   )
 
-  # Log in as this user so recipients_path is accessible
+  # Log in
   visit login_path
-  # Adjust label text if your login form uses "Email Address"
-  fill_in "Email", with: @user.email
+  fill_in "Email", with: @user.email      # change to "Email Address" if that’s your label
   fill_in "Password", with: "Password@123"
   click_button "Log In"
 end
 
 Given("a recipient without an event exists") do
-  # Separate user so this scenario is isolated
   @user = User.create!(
     name: "John No Event",
     email: "john_no_event@example.com",
@@ -53,6 +46,7 @@ Given("a recipient without an event exists") do
 
   @recipient = Recipient.create!(
     name: "NoEventRecipient",
+    email: "noevent@example.com",
     relationship: "Friend",
     user: @user
   )
@@ -72,18 +66,77 @@ When("I am on the recipients page") do
 end
 
 When("I click the Gift Idea button") do
-  click_on "Gift Idea"
+  # This assumes there is a visible button or link with text "Gift Idea"
+  click_link_or_button "Gift Idea"
 end
 
 When("I fill in the gift idea form correctly") do
-  fill_in "Gift Idea",        with: "Laptop"
-  fill_in "Description",      with: "15 inch, 16GB RAM"
-  fill_in "Estimated Price",  with: "999.99"
-  fill_in "Link",             with: "https://example.com/laptop"
+  # Do NOT assume a turbo-frame; work on the whole page.
+  # Try a few possible label/ID variations so we don't depend on exact wording.
+
+  # ---- Title / main idea field ----
+  title_locators = [
+    "Gift Idea", "Gift idea",
+    "Gift Name", "Gift name",
+    "Title", "Idea",
+    "gift_idea_title", "gift_idea_idea"
+  ]
+
+  title_filled = false
+  title_locators.each do |locator|
+    if page.has_field?(locator, disabled: false)
+      fill_in locator, with: "Laptop"
+      title_filled = true
+      break
+    end
+  end
+
+  raise "Could not find a title field for the gift idea form. Adjust step to match your label." unless title_filled
+
+  # ---- Description field ----
+  desc_locators = [
+    "Description", "Notes",
+    "gift_idea_description"
+  ]
+
+  desc_locators.each do |locator|
+    if page.has_field?(locator, disabled: false)
+      fill_in locator, with: "15 inch, 16GB RAM"
+      break
+    end
+  end
+
+  # ---- Price / Estimated price field ----
+  price_locators = [
+    "Estimated Price", "Estimated price",
+    "Price",
+    "gift_idea_estimated_price", "gift_idea_price"
+  ]
+
+  price_locators.each do |locator|
+    if page.has_field?(locator, disabled: false)
+      fill_in locator, with: "999.99"
+      break
+    end
+  end
+
+  # ---- Link / Purchase link field ----
+  link_locators = [
+    "Link", "URL",
+    "Purchase link", "Purchase Link",
+    "gift_idea_link"
+  ]
+
+  link_locators.each do |locator|
+    if page.has_field?(locator, disabled: false)
+      fill_in locator, with: "https://example.com/laptop"
+      break
+    end
+  end
 end
 
 When('I press {string}') do |text|
-  click_on text   # works for both submit button and Cancel link
+  click_on text   # works for both buttons and links
 end
 
 # ================================
@@ -91,7 +144,6 @@ end
 # ================================
 
 Then("I should be on the recipient page") do
-  # After saving we redirect to recipients index in your controller
   expect(page).to have_current_path(recipient_path(@recipient), ignore_query: true)
 end
 
@@ -100,10 +152,11 @@ Then("I should be on the recipients page") do
 end
 
 Then("I should see the new gift idea") do
+  # We filled "Laptop" as the idea text
   expect(page).to have_content("Laptop")
 end
 
 Then("the Gift Idea button should be disabled") do
-  # We just assert there exists a disabled Gift Idea button
+  # Works if you render it as a disabled <button>
   expect(page).to have_selector("button[disabled]", text: "Gift Idea")
 end

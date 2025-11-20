@@ -74,3 +74,7 @@ end
 When('I select {string} from {string}') do |option, field|
   select option, from: field
 end
+
+Given("I am on the signup page") do
+  visit signup_path
+end

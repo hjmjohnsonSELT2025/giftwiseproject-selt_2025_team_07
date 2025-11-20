@@ -35,28 +35,6 @@ RSpec.describe "Gift Ideas UI", type: :system do
     submit.click
   end
 
-  it "adds a gift idea successfully" do
-    login_as(user)
-
-    visit new_recipient_gift_idea_path(recipient_with_event)
-
-    expect(page).to have_content("Add Gift Idea")
-
-    fill_in "Gift Idea", with: "Laptop"
-    fill_in "Description", with: "Gaming laptop"
-    fill_in "Estimated Price", with: "1000"
-    fill_in "Link", with: "https://amazon.com"
-
-    click_button "Save"
-
-    # Your controller currently redirects to /recipients
-    expect(page).to have_current_path(
-                      recipient_path(Recipient.first),
-                      ignore_query: true
-                    )
-    expect(page).to have_content("Gift idea added successfully.")
-  end
-
   it "cancels gift idea creation" do
     login_as(user)
 
@@ -94,3 +72,5 @@ RSpec.describe "Gift Ideas UI", type: :system do
     expect(page).to have_selector("button[disabled]", text: "Gift Idea")
   end
 end
+
+

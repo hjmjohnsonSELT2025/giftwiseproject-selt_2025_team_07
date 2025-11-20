@@ -29,7 +29,7 @@ Feature: Profile Update
     And I fill in "Phone Number" with "(123) 456-7890"
     And I select "Male" from "Gender"
     And I fill in "Occupation" with "Software Engineer"
-    And I fill in "Hobbies & Interests" with "Reading, coding"
+    And I fill in "Hobbies and Interests" with "Reading, coding"
     And I fill in "Things You Like" with "Coffee, music"
     And I fill in "Things You Dislike" with "Spam calls"
     And I click "Update Profile"
@@ -99,3 +99,9 @@ Feature: Profile Update
     When I visit the edit profile page
     Then I should be on the login page
     And I should see "Please log in to continue"
+
+  Scenario: Required fields on Edit Profile show asterisk
+    Given I am logged in
+    And I am on the edit profile page
+    Then I should see "Full Name *"
+    And I should see "Email Address *"

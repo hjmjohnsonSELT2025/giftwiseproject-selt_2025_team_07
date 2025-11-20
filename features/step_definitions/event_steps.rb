@@ -254,36 +254,27 @@ end
 
 
 Given("a recipient named {string} exists") do |name|
-  @recipient = @user.recipients.create!(name: name)
+  user = @current_user || User.first || User.create!(
+    name: "Test User",
+    email: "test@example.com",
+    password: "Password@123",
+    password_confirmation: "Password@123"
+  )
+
+  @recipient = Recipient.create!(
+    name: name,
+    email: "#{name.downcase.gsub(' ', '.')}@example.com",
+    relationship: "Friend",
+    gender: Recipient::GENDERS.first,
+    user: user
+  )
 end
 
-When("I edit the recipient {string}") do |name|
-  rec = Recipient.find_by(name: name)
-  visit edit_recipient_path(rec)
-end
 
 When("I change the name to {string}") do |new_name|
   fill_in "Name", with: new_name
 end
 
-When("I delete the recipient {string}") do |name|
-  rec = Recipient.find_by(name: name)
-  visit recipients_path
-  # Try multiple possible selectors
-  begin
-    within("tr[data-id='#{rec.id}']") do
-      click_button "Remove"
-    end
-  rescue Capybara::ElementNotFound
-    begin
-      within("#recipient_#{rec.id}") do
-        click_link "Delete"
-      end
-    rescue Capybara::ElementNotFound
-      click_link "Delete", match: :first
-    end
-  end
-end
 
 
 Given('a user exists with email {string} and password {string}') do |email, password|
@@ -350,3 +341,23 @@ When('I click on the event row for {string}') do |event_name|
   # Assuming each event is rendered as a link with the event name
   click_link event_name
 end
+
+Given("I am on the edit event page for {string}") do |event_name|
+  user = @user || User.find_by(email: "john@example.com") || User.first
+
+  event = Event.find_by(event_name: event_name, user: user)
+
+  unless event
+    event = Event.create!(
+      event_name: event_name,
+      event_date: Date.today,   # 👈 set mandatory date
+      user: user
+    # add other required fields here if you have them
+    )
+  end
+
+  visit edit_event_path(event)
+end
+
+
+
