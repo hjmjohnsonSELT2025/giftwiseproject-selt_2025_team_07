@@ -18,7 +18,10 @@ Rails.application.routes.draw do
   get "/passwords/edit",   to: "passwords#edit"
   get "/passwords/update", to: "passwords#edit"
 
-  resources :recipients
+  resources :recipients do
+    resources :gift_ideas, only: [:new, :create, :destroy]
+    resources :gift_given_backlogs, only: [:new, :create, :destroy]
+  end
 
   resources :events do
     member do
@@ -26,6 +29,7 @@ Rails.application.routes.draw do
       delete :remove_recipient
     end
   end
+
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
