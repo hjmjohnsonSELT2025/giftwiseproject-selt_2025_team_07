@@ -1,136 +1,185 @@
-<!-- app/views/chatbots/_widget.html.erb -->
-<div
-  data-controller="chatbot"
-  data-action="click@window->chatbot#clickOutside"
->
-  <!-- Floating chatbot button: fixed bottom-right -->
-  <div
+<%# app/views/chatbots/_widget.html.erb %>
+<div data-controller="chatbot">
+  <!-- Floating chatbot button (bottom-right) -->
+  <button
+    type="button"
+    data-chatbot-target="toggleButton"
+    data-action="click->chatbot#toggle"
     style="
     position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 40;
-    "
-  >
-    <button
-      type="button"
-      data-chatbot-target="button"
-      data-action="click->chatbot#toggle"
-      style="
+      z-index: 9999;
       width: 56px;
-        height: 56px;
-        border-radius: 9999px;
-        background: #ffffff;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border: none;
-        padding: 0;
-      "
-      aria-label="Open GiftWise Assistant"
-    >
-      <%= image_tag "chatbot.png", alt: "Chatbot", style: "width: 36px; height: 36px;" %>
-    </button>
-  </div>
+      height: 56px;
+      border-radius: 9999px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+      transition: transform 0.15s ease-out;
+    "
+    onmouseover="this.style.transform='scale(1.06)'"
+    onmouseout="this.style.transform='scale(1)'"
+  >
+    <img src="/assets/chatbot.png" alt="Chatbot" style="width: 40px; height: 40px;">
+  </button>
 
-  <!-- Sidebar panel: slides in from right -->
+  <!-- Slide-in sidebar panel (right side) -->
   <div
     data-chatbot-target="panel"
     style="
     position: fixed;
-      top: 80px;
-      right: 0;
-      height: calc(100vh - 100px);
-      width: 380px;
-      max-width: 100%;
-      background: #ffffff;
-      box-shadow: -12px 0 30px rgba(0, 0, 0, 0.15);
-      border-radius: 24px 0 0 24px;
-      border-left: 1px solid #e5e7eb;
-      z-index: 39;
+      bottom: 96px;
+      right: 24px;
+      width: 360px;
+      max-height: 480px;
+      background: #f9fafb;
+      border-radius: 24px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 20px 45px rgba(15,23,42,0.25);
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      transform: translateX(100%);
       opacity: 0;
+      transform: translateX(120%);
       pointer-events: none;
-      transition: all 0.25s ease-out;
+      transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+      z-index: 9999;
     "
   >
     <!-- Header -->
-    <div
-      style="
-      display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 18px;
-        border-bottom: 1px solid #f3f4f6;
-      "
-    >
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div
-          style="
-          width: 32px;
-            height: 32px;
-            border-radius: 9999px;
-            background: #eef2ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <%= image_tag "chatbot.png", alt: "Chatbot", style: "width: 20px; height: 20px;" %>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e5e7eb; background:#ffffff;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div style="width:32px; height:32px; border-radius:16px; background:#eef2ff; display:flex; align-items:center; justify-content:center;">
+          <img src="/assets/chatbot.png" alt="Bot" style="width:22px; height:22px;">
         </div>
         <div>
-          <p style="font-size: 14px; font-weight: 600; margin: 0;">GiftWise Assistant</p>
-          <p style="font-size: 11px; color: #6b7280; margin: 0;">
-            Here to help with events &amp; recipients
-          </p>
+          <p style="margin:0; font-size:13px; font-weight:600; color:#111827;">GiftWise Assistant</p>
+          <p style="margin:0; font-size:11px; color:#6b7280;">Ask about events, recipients & wishlist</p>
         </div>
       </div>
 
-      <button
-        type="button"
-        data-action="click->chatbot#close"
-        aria-label="Close chatbot"
-        style="
-        width: 28px;
-          height: 28px;
-          border-radius: 9999px;
-          border: none;
-          background: transparent;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #6b7280;
-        "
-        onmouseover="this.style.background='#f3f4f6'"
-        onmouseout="this.style.background='transparent'"
-      >
-        ✕
-      </button>
+      <div style="display:flex; align-items:center; gap:6px; color:#9ca3af; font-size:11px;">
+        <!-- Reload conversation -->
+        <button
+          type="button"
+          title="Restart conversation"
+          data-action="click->chatbot#resetConversation"
+          style="border:none; background:transparent; cursor:pointer; color:inherit;"
+        >
+          ⟳
+        </button>
+
+        <!-- Exit session -->
+        <button
+          type="button"
+          title="Exit session"
+          data-action="click->chatbot#exitSession"
+          style="
+          border-radius:9999px;
+            border:1px solid #e5e7eb;
+            padding:2px 8px;
+            background:#f9fafb;
+            cursor:pointer;
+            color:#6b7280;
+          "
+        >
+          Exit
+        </button>
+
+        <!-- Close panel -->
+        <button
+          type="button"
+          title="Close"
+          data-action="click->chatbot#closePanel"
+          style="border:none; background:transparent; cursor:pointer; font-size:13px; color:#6b7280;"
+        >
+          ✕
+        </button>
+      </div>
     </div>
 
-    <!-- Body (placeholder content) -->
+    <!-- Messages -->
     <div
+      data-chatbot-target="messages"
       style="
-      flex: 1;
-        padding: 14px 18px;
-        font-size: 13px;
-        color: #374151;
+      padding: 8px 10px 4px 10px;
         overflow-y: auto;
+        max-height: 320px;
+        font-size: 13px;
       "
     >
-      <p style="font-weight: 500; margin-top: 0;">
-        This is your chatbot sidebar placeholder.
-      </p>
-      <p style="font-size: 12px; color: #6b7280;">
-        Later you can plug in real AI chat UI here without touching
-        <code>dashboard/index.html.erb</code>. All chatbot layout lives in
-        <code>app/views/chatbots/_widget.html.erb</code>.
-      </p>
+      <% (session[:chatbot_history] || []).each do |msg| %>
+        <% if msg["role"] == "bot" %>
+          <div style="display:flex; justify-content:flex-start; margin-bottom:6px;">
+            <div style="max-width:80%; background:#ffffff; color:#111827; border-radius:16px; padding:6px 9px; border:1px solid #e5e7eb; white-space:pre-wrap;">
+              <%= msg["text"] %>
+            </div>
+          </div>
+        <% else %>
+          <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+            <div style="max-width:80%; background:#a855f7; color:#ffffff; border-radius:16px; padding:6px 9px; white-space:pre-wrap;">
+              <%= msg["text"] %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <% if (session[:chatbot_history] || []).empty? %>
+        <div style="display:flex; justify-content:flex-start; margin-bottom:6px;">
+          <div style="max-width:80%; background:#ffffff; color:#111827; border-radius:16px; padding:6px 9px; border:1px solid #e5e7eb; white-space:pre-wrap;">
+            Hi there! 👋 I'm your GiftWise Assistant.
+            Ask me about upcoming events, recipients, or wishlist — or tap a suggested question below.
+          </div>
+        </div>
+      <% end %>
     </div>
+
+    <!-- Quick replies -->
+    <div
+      data-chatbot-target="quickReplies"
+      style="padding: 0 10px 6px 10px; display:flex; flex-wrap:wrap;"
+    >
+      <%# JS will fill this from /chatbot/message %>
+    </div>
+
+    <!-- Input -->
+    <form
+      data-chatbot-target="form"
+      data-action="submit->chatbot#send"
+      style="border-top:1px solid #e5e7eb; padding:6px 8px; background:#ffffff; display:flex; align-items:center; gap:6px;"
+    >
+      <input
+        type="text"
+        placeholder="Ask about events, recipients, or wishlist…"
+        data-chatbot-target="input"
+        style="
+        flex:1;
+          font-size:13px;
+          padding:6px 10px;
+          border-radius:9999px;
+          border:1px solid #d1d5db;
+          outline:none;
+        "
+      >
+      <button
+        type="submit"
+        style="
+        padding:6px 10px;
+          border-radius:9999px;
+          border:none;
+          background:#a855f7;
+          color:#ffffff;
+          font-size:12px;
+          font-weight:500;
+          cursor:pointer;
+        "
+      >
+        Send
+      </button>
+    </form>
   </div>
 </div>
