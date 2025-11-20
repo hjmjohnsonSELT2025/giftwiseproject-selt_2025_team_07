@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   resources :recipients
 
   resources :events do
+    resources :ai_gift_suggestions, only: [:index, :create]
     member do
       post :add_recipient
       delete :remove_recipient

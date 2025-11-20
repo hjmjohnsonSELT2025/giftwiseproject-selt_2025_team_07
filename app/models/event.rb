@@ -2,6 +2,7 @@ class Event < ApplicationRecord
   belongs_to :user
   has_many :event_recipients, dependent: :destroy
   has_many :recipients, through: :event_recipients
+  has_many :ai_gift_suggestions, dependent: :destroy
 
   validates :event_name, presence: true
   validates :event_date, presence: true

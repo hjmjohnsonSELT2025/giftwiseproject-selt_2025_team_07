@@ -1,0 +1,204 @@
+<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
+  <header class="w-full bg-white shadow-sm">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+      <%= link_to(current_user.present? ? dashboard_path : root_path,
+                  class: "flex items-center gap-2 hover:opacity-90 transition") do %>
+        <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               class="w-6 h-6 text-[#a855f7]"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round">
+            <rect x="3" y="8" width="18" height="13" rx="2" ry="2"></rect>
+            <path d="M12 8v13"></path>
+            <path d="M3 12h18"></path>
+            <path d="M12 8h4a2 2 0 0 0 0-4c-3 0-4 4-4 4z"></path>
+            <path d="M12 8H8a2 2 0 0 1 0-4c3 0 4 4 4 4z"></path>
+          </svg>
+        </div>
+        <span class="text-xl font-semibold tracking-tight">GiftWise</span>
+      <% end %>
+
+      <nav class="flex items-center gap-4 text-sm font-medium">
+        <span class="text-gray-700">
+          Welcome, <%= current_user.name.presence || "there" %>!
+        </span>
+
+        <div class="relative" data-controller="dropdown">
+          <button
+            type="button"
+            data-action="click->dropdown#toggle"
+            class="w-9 h-9 rounded-full bg-[#f4e6ff] flex items-center justify-center
+             hover:bg-[#e9d5ff] transition shadow-sm"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24"
+                 class="w-5 h-5 text-[#a855f7]"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3"></circle>
+              <path d="M6 19c0-3 2.5-5 6-5s6 2 6 5"></path>
+            </svg>
+          </button>
+
+          <div
+            data-dropdown-target="menu"
+            class="hidden absolute left-0 mt-3 w-64 origin-top-left rounded-2xl bg-white
+           shadow-lg border border-gray-200 py-2 z-50"
+          >
+            <div class="px-4 pb-2 border-b border-gray-100 mb-2">
+              <p class="text-sm font-semibold text-gray-900 truncate">
+                <%= current_user.name %>
+              </p>
+              <% if current_user.respond_to?(:email) && current_user.email.present? %>
+                <p class="text-xs text-gray-500 truncate">
+                  <%= current_user.email %>
+                </p>
+              <% end %>
+            </div>
+
+            <%= link_to "Edit Profile",
+                        edit_profile_path,
+                        class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap" %>
+
+            <%= link_to "Change password",
+                        edit_password_path,
+                        class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap" %>
+
+            <div class="mt-2 pt-2 border-t border-gray-100">
+              <%= button_to "Log Out",
+                            logout_path,
+                            method: :delete,
+                            class: "w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 whitespace-nowrap" %>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+    <% back_path, back_label =
+         case params[:from]
+         when "events_index"
+           [events_path, "Back to All Events"]
+         when "dashboard"
+           [dashboard_path, "Back to Dashboard"]
+         when "event"
+           [event_path(@event), "Back to Event"]
+         else
+           [dashboard_path, "Back"]
+         end %>
+
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4">
+        <%= link_to back_label,
+                    back_path,
+                    class: "inline-flex items-center px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-100" %>
+
+        <div>
+          <h1 class="text-2xl font-semibold">AI Gift Ideas</h1>
+          <p class="text-sm text-gray-500">
+            <%= @event.event_name %>
+            <% if @event.event_date.present? %>
+              • <%= @event.event_date.strftime("%b %d, %Y") %>
+            <% end %>
+            <% if @event.budget.present? %>
+              • Budget: <%= number_to_currency(@event.budget, precision: 0) %>
+            <% end %>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <% if @recipients.empty? %>
+      <div class="bg-white rounded-3xl border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-500 mb-8">
+        This event has no recipients yet. Add at least one recipient to generate AI ideas.
+      </div>
+    <% end %>
+
+    <div class="space-y-6">
+      <% @recipients.each do |recipient| %>
+        <% suggestions = @suggestions_by_recipient[recipient.id] || [] %>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="font-semibold text-lg"><%= recipient.name %></h2>
+              <p class="text-sm text-gray-500">
+                <%= recipient.relationship.presence || "Recipient" %>
+                <% if recipient.hobbies.present? %>
+                  • Hobbies: <%= truncate(recipient.hobbies, length: 80) %>
+                <% end %>
+              </p>
+            </div>
+
+            <% has_suggestions = suggestions.any? %>
+            <%= button_to event_ai_gift_suggestions_path(@event,
+                                                         recipient_id: recipient.id,
+                                                         round_type: (has_suggestions ? "regenerate" : "initial"),
+                                                         from: params[:from]),
+                          method: :post,
+                          class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" do %>
+              <% if has_suggestions %>
+                <span class="mr-1">↻</span>
+                <span>Regenerate</span>
+              <% else %>
+                <span class="mr-1">✨</span>
+                <span>Generate Ideas</span>
+              <% end %>
+            <% end %>
+          </div>
+
+          <% if suggestions.any? %>
+            <!-- FIVE clean cards per row with consistent square images -->
+            <div class="grid grid-cols-5 auto-cols-fr gap-3 mt-3" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
+              <% suggestions.first(5).each do |idea| %>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-w-0">
+                  <!-- Square image container with object-cover for consistent sizing -->
+                  <div class="w-full aspect-square bg-gray-100 overflow-hidden">
+                    <% if idea.image_url.present? %>
+                      <img src="<%= idea.image_url %>"
+                           alt="<%= idea.title %>"
+                           class="w-full h-full object-cover">
+                    <% end %>
+                  </div>
+
+                  <!-- Content with fixed structure -->
+                  <div class="p-2.5 flex flex-col flex-1">
+                    <h3 class="font-semibold text-xs mb-1.5 line-clamp-2 min-h-[2rem]">
+                      <%= idea.title %>
+                    </h3>
+
+                    <p class="text-[11px] text-gray-600 mb-2 line-clamp-2 min-h-[2rem]">
+                      <%= idea.description.to_s %>
+                    </p>
+
+                    <div class="mt-auto pt-1.5 border-t border-gray-100 text-[10px] text-gray-500 space-y-0.5">
+                      <% if idea.category.present? %>
+                        <p class="truncate"><span class="font-medium">Category:</span> <%= idea.category %></p>
+                      <% end %>
+                      <% if idea.estimated_price.present? %>
+                        <p class="truncate"><span class="font-medium">Price:</span> <%= idea.estimated_price %></p>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm text-gray-400 mt-2">
+              No AI ideas yet. Click "Generate Ideas" to get suggestions for <%= recipient.name %>.
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </main>
+</div>
