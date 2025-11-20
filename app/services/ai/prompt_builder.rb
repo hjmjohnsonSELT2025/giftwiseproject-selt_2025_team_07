@@ -3,13 +3,14 @@ require "json"
 
 module Ai
   class PromptBuilder
-    def initialize(user:, event:, recipient:, event_recipient:, past_gifts:, budget_cents:)
-      @user = user
-      @event = event
-      @recipient = recipient
-      @event_recipient = event_recipient
-      @past_gifts = past_gifts
-      @budget_cents = budget_cents
+    def initialize(user:, event:, recipient:, event_recipient:, past_gifts:, budget_cents:, previous_ai_titles: [])
+      @user             = user
+      @event            = event
+      @recipient        = recipient
+      @event_recipient  = event_recipient
+      @past_gifts       = past_gifts
+      @budget_cents     = budget_cents
+      @previous_ai_titles = Array(previous_ai_titles).map { |t| safe(t) }.reject(&:blank?)
     end
 
     def build
@@ -38,6 +39,7 @@ module Ai
         HARD RULES:
         - Never suggest anything that matches the recipient's dislikes.
         - Never repeat a past gift with the same or very similar name.
+        - Never repeat or slightly rephrase any of the titles listed in "AI GIFT IDEAS ALREADY SUGGESTED".
         - Stay within the budget if one exists.
         - Suggest a variety of categories (not all from the same category).
         - Avoid generic, boring ideas; prefer something that feels personal to this recipient.
@@ -72,6 +74,10 @@ module Ai
         PAST GIFTS TO AVOID REPEATING:
         #{past_gifts_section}
 
+        AI GIFT IDEAS ALREADY SUGGESTED FOR THIS RECIPIENT + EVENT:
+        These were generated previously by the AI. Do NOT repeat them, do NOT generate close variations, and do NOT change only a few words:
+        #{previous_ai_titles_section}
+
         Please now return 5 gift ideas strictly as JSON using the schema above.
       PROMPT
     end
@@ -94,6 +100,12 @@ module Ai
         dollars = (@budget_cents / 100.0)
         "Try to keep each gift roughly within $#{format('%.2f', dollars)} or a sensible range around it."
       end
+    end
+
+    def previous_ai_titles_section
+      return "- No previous AI suggestions for this recipient/event yet." if @previous_ai_titles.blank?
+
+      @previous_ai_titles.map { |t| "- #{t}" }.join("\n")
     end
 
     def past_gifts_section

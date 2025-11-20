@@ -64,7 +64,7 @@ module Ai
       http.use_ssl = (uri.scheme == "https")
       http.read_timeout = 30
 
-      if Rails.env.development?
+      if Rails.env.development? || Rails.env.test?
         http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       end
 
