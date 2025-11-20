@@ -12,6 +12,11 @@ Rails.application.routes.draw do
   get "dashboard", to: "dashboard#index"
 
   get "/ai_gift_library", to: "ai_gift_suggestions#library", as: :ai_gift_library
+  get "chatbot", to: "chatbots#show"
+
+  # Chatbot API
+  post "chatbot/message", to: "chatbots#message"
+
 
   resource :profile, only: [:edit, :update]
 
