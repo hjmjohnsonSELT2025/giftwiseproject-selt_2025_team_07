@@ -275,6 +275,56 @@
             <%= @recipient.dislikes.presence || "—" %>
           </p>
         </div>
+
+        <!-- Gift Ideas Section -->
+        <div class="mt-10">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Gift Ideas</h3>
+          <% @gift_ideas.each do |idea| %>
+            <turbo-frame id="gift_idea_<%= idea.id %>">
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-purple-50 border border-purple-200">
+
+                <p class="text-sm font-semibold text-gray-900">
+                  <%= idea.idea %>
+                  <% if idea.event_recipient&.event&.event_name.present? %>
+                    <span class="text-xs text-gray-600">( <%= idea.event_recipient.event.event_name %> )</span>
+                  <% end %>
+                </p>
+
+                <%= button_to "Remove",
+                              recipient_gift_idea_path(@recipient, idea),
+                              method: :delete,
+                              class: "text-xs font-medium text-red-600 hover:text-red-800" %>
+              </div>
+            </turbo-frame>
+          <% end %>
+
+        </div>
+
+        <!-- Gift Given Section -->
+        <div class="mt-10">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Gift Given</h3>
+
+
+          <% @gift_given.each do |gift| %>
+            <turbo-frame id="gift_given_<%= gift.id %>">
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-purple-50 border border-purple-200">
+
+                <p class="text-sm font-semibold text-gray-900">
+                  <%= gift.gift_name %>
+                  <% if gift.event_name.present? %>
+                    <span class="text-xs text-gray-600">( <%= gift.event_name %> )</span>
+                  <% end %>
+                </p>
+
+                <%= button_to "Remove",
+                              recipient_gift_given_backlog_path(@recipient, gift),
+                              method: :delete,
+                              class: "text-xs font-medium text-red-600 hover:text-red-800" %>
+              </div>
+            </turbo-frame>
+          <% end %>
+
+        </div>
       </div>
     </div>
   </div>

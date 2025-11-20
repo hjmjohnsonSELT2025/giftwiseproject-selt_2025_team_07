@@ -12,6 +12,13 @@ class RecipientsController < ApplicationController
   end
 
   def show
+    @recipient = Recipient.find(params[:id])
+
+    # A) Gift Ideas (only if the recipient has event_recipients)
+    @gift_ideas = GiftIdea.where(event_recipient_id: @recipient.event_recipients.pluck(:id))
+
+    # B) Gift Given Backlogs
+    @gift_given = @recipient.gift_given_backlogs
   end
 
   def edit

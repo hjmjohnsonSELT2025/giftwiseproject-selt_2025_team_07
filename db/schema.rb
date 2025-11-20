@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
   create_table "ai_gift_suggestions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -99,7 +99,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
 
   create_table "gift_given_backlogs", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.integer "event_id", null: false
+    t.integer "event_id"
     t.integer "recipient_id", null: false
     t.string "gift_name"
     t.text "description"
@@ -110,6 +110,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
     t.integer "created_from_idea_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "event_name"
     t.index ["event_id"], name: "index_gift_given_backlogs_on_event_id"
     t.index ["recipient_id"], name: "index_gift_given_backlogs_on_recipient_id"
     t.index ["user_id"], name: "index_gift_given_backlogs_on_user_id"
@@ -176,6 +177,24 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
     t.index ["user_id"], name: "index_recipients_on_user_id"
   end
 
+  create_table "temporary_gifts", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "gift_type"
+    t.string "gift_idea", null: false
+    t.text "description"
+    t.decimal "price_estimate"
+    t.string "link"
+    t.string "gift_name", null: false
+    t.decimal "price"
+    t.string "category"
+    t.string "purchase_link"
+    t.date "given_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "event"
+    t.index ["user_id"], name: "index_temporary_gifts_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -224,6 +243,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
   add_foreign_key "notifications", "users"
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "recipients", "users"
+  add_foreign_key "temporary_gifts", "users"
   add_foreign_key "wishlists", "recipients"
   add_foreign_key "wishlists", "users"
 end
