@@ -158,6 +158,11 @@ GEM
       logger
     faraday-net_http (3.4.2)
       net-http (~> 0.5)
+    factory_bot (6.5.6)
+      activesupport (>= 6.1.0)
+    factory_bot_rails (6.5.1)
+      factory_bot (~> 6.5)
+      railties (>= 6.1.0)
     ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-aarch64-linux-musl)
     ffi (1.17.2-arm-linux-gnu)
@@ -452,6 +457,7 @@ DEPENDENCIES
   database_cleaner-active_record (~> 2.0)
   debug
   dotenv-rails
+  factory_bot_rails (~> 6.4)
   importmap-rails
   jbuilder
   omniauth-google-oauth2

@@ -77,3 +77,9 @@ Feature: User Sign Up
   Scenario: Navigation to home page from sign up
     When I click "Back to Home"
     Then I should be on the home page
+
+  Scenario: Required fields show a red asterisk on the signup form
+    Given I am on the signup page
+    Then I should see "Full Name *"
+    And I should see "Email Address *"
+    And I should see "Password *"

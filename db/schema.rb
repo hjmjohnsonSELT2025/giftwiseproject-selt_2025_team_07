@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
   create_table "ai_gift_suggestions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -99,7 +99,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
 
   create_table "gift_given_backlogs", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.integer "event_id", null: false
+    t.integer "event_id"
     t.integer "recipient_id", null: false
     t.string "gift_name"
     t.text "description"
@@ -110,6 +110,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_044118) do
     t.integer "created_from_idea_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "event_name"
     t.index ["event_id"], name: "index_gift_given_backlogs_on_event_id"
     t.index ["recipient_id"], name: "index_gift_given_backlogs_on_recipient_id"
     t.index ["user_id"], name: "index_gift_given_backlogs_on_user_id"

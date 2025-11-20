@@ -20,6 +20,13 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#index"
 
+  get "/ai_gift_library", to: "ai_gift_suggestions#library", as: :ai_gift_library
+  get "chatbot", to: "chatbots#show"
+
+  # Chatbot API
+  post "chatbot/message", to: "chatbots#message"
+
+
   resource :profile, only: [:edit, :update]
 
   resource :password, only: [:edit, :update]
@@ -27,14 +34,25 @@ Rails.application.routes.draw do
   get "/passwords/edit",   to: "passwords#edit"
   get "/passwords/update", to: "passwords#edit"
 
-  resources :recipients
+  resources :recipients do
+    resources :gift_ideas, only: [:new, :create, :destroy]
+    resources :gift_given_backlogs, only: [:new, :create, :destroy]
+  end
 
   resources :events do
+    resources :ai_gift_suggestions, only: [:index, :create] do
+      member do
+        post :toggle_wishlist
+      end
+    end
+
     member do
       post :add_recipient
       delete :remove_recipient
     end
   end
+
+  resources :wishlists, only: [:index]
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

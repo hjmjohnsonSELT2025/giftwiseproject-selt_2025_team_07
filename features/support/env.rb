@@ -31,3 +31,12 @@ end
 After do
   OmniAuth.config.mock_auth[:google_oauth2] = nil
 end
+# Enable RSpec mocks in Cucumber so we can use `allow`, `instance_double`, etc.
+require "rspec/mocks"
+
+World(RSpec::Mocks::ExampleMethods)
+
+After do
+  # Reset mocks between scenarios
+  RSpec::Mocks.space.reset_all
+end

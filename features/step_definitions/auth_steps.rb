@@ -157,3 +157,6 @@ Given('the user {string} has linked their Google account') do |email|
     name: user.name
   )
 end
+Given("I am on the signup page") do
+  visit signup_path
+end

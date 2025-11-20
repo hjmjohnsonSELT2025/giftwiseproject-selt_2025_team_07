@@ -47,6 +47,9 @@ group :development, :test do
   # RSpec test framework
   gem "rspec-rails", "~> 7.1"
 
+  # FactoryBot for test data
+  gem "factory_bot_rails", "~> 6.4"
+
   # Cucumber (BDD) + Capybara
   gem "cucumber-rails", "~> 2.6", require: false
   gem "capybara", "~> 3.40"
@@ -58,6 +61,7 @@ group :development, :test do
   # Cleaning DB between tests
   gem "database_cleaner-active_record", "~> 2.0"
 end
+
 
 group :development do
   # Console on exception pages

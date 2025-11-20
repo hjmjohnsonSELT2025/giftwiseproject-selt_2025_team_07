@@ -4,6 +4,7 @@ class User < ApplicationRecord
   has_many :event_recipients, dependent: :destroy
   has_many :authentications, dependent: :destroy
   has_many :password_reset_tokens, dependent: :destroy
+  has_many :ai_gift_suggestions, dependent: :destroy
 
   attr_accessor :password_confirmation
   attr_reader :password

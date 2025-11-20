@@ -132,13 +132,28 @@
                   <line x1="12" y1="1" x2="12" y2="23"></line>
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                 </svg>
-                $<%= number_with_precision(@event.budget, precision: 2) %>
+                <%= number_with_precision(@event.budget, precision: 2) %>
               </span>
             <% end %>
           </div>
         </div>
 
         <div class="flex gap-2">
+          <% if @event.recipients.exists? %>
+            <%= link_to "Get Ideas",
+                        event_ai_gift_suggestions_path(@event, from: "event"),
+                        class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+          <% else %>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-full bg-gray-200 text-gray-400 text-sm font-medium cursor-not-allowed"
+              title="Add at least one recipient to enable AI gift ideas"
+              disabled
+            >
+              Get Ideas
+            </button>
+          <% end %>
+
           <%= link_to "Edit Event",
                       edit_event_path(@event),
                       class: "px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition" %>
