@@ -6,14 +6,31 @@ export default class extends Controller {
     static values = { open: { type: Boolean, default: false } }
 
     connect() {
-        this.csrfToken = document.querySelector("meta[name='csrf-token']")?.content || ""
+        this.csrfToken =
+            document.querySelector("meta[name='csrf-token']")?.content || ""
+
+        // panel starts closed
         this.closePanelHard()
 
-        document.addEventListener("click", this.handleOutsideClick)
+        // bind once so we can remove correctly
+        this.boundOutsideClick = this.handleOutsideClick.bind(this)
+        document.addEventListener("click", this.boundOutsideClick)
+
+        // event delegation for ALL quick-reply buttons
+        if (this.hasQuickRepliesTarget) {
+            this.boundQuickReplyClick = this.handleQuickReplyClick.bind(this)
+            this.quickRepliesTarget.addEventListener("click", this.boundQuickReplyClick)
+        }
     }
 
     disconnect() {
-        document.removeEventListener("click", this.handleOutsideClick)
+        document.removeEventListener("click", this.boundOutsideClick)
+        if (this.boundQuickReplyClick && this.hasQuickRepliesTarget) {
+            this.quickRepliesTarget.removeEventListener(
+                "click",
+                this.boundQuickReplyClick
+            )
+        }
     }
 
     // ---------- Open / close ----------
@@ -40,14 +57,13 @@ export default class extends Controller {
     }
 
     closePanelHard() {
-        // same as close, but without animation concerns
         this.closePanel()
     }
 
-    handleOutsideClick = (event) => {
+    handleOutsideClick(event) {
         if (!this.openValue) return
 
-        const panel = this.panelTarget
+        const panel  = this.panelTarget
         const button = this.toggleButtonTarget
 
         if (!panel.contains(event.target) && !button.contains(event.target)) {
@@ -68,9 +84,14 @@ export default class extends Controller {
         this.postToServer({ text })
     }
 
-    quickReply(event) {
-        const intent = event.currentTarget.dataset.intent
-        const label = event.currentTarget.innerText.trim()
+    // central handler for ALL quick-reply buttons
+    handleQuickReplyClick(event) {
+        const btn = event.target.closest("button[data-intent]")
+        if (!btn) return
+
+        const intent = btn.dataset.intent
+        const label  = btn.innerText.trim()
+        if (!intent) return
 
         this.appendMessage("user", label)
         this.postToServer({ text: label, intent })
@@ -93,25 +114,27 @@ export default class extends Controller {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-Token": this.csrfToken
+                "X-CSRF-Token": this.csrfToken,
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
         })
             .then((r) => r.json())
             .then((data) => {
+                const messages     = data.messages || []
+                const quickReplies = data.quick_replies || []
+
                 if (opts.skipUserAppend) {
-                    // full refresh of history
-                    this.renderHistory(data.messages || [])
+                    // full refresh (used for reset/exit)
+                    this.renderHistory(messages)
                 } else {
-                    // append only the last bot message
-                    const msgs = data.messages || []
-                    const last = msgs[msgs.length - 1]
+                    // just add the last bot message
+                    const last = messages[messages.length - 1]
                     if (last && last.role === "bot") {
                         this.appendMessage("bot", last.text)
                     }
                 }
 
-                this.renderQuickReplies(data.quick_replies || [])
+                this.renderQuickReplies(quickReplies)
                 if (opts.closeAfter) this.closePanel()
             })
             .catch((e) => console.error("Chatbot error", e))
@@ -121,7 +144,9 @@ export default class extends Controller {
 
     renderHistory(messages) {
         this.messagesTarget.innerHTML = ""
-        messages.forEach((msg) => this.appendMessage(msg.role, msg.text, { dontScroll: true }))
+        messages.forEach((msg) =>
+            this.appendMessage(msg.role, msg.text, { dontScroll: true })
+        )
         this.scrollToBottom()
     }
 
@@ -129,7 +154,8 @@ export default class extends Controller {
         const wrapper = document.createElement("div")
         wrapper.style.display = "flex"
         wrapper.style.marginBottom = "6px"
-        wrapper.style.justifyContent = role === "user" ? "flex-end" : "flex-start"
+        wrapper.style.justifyContent =
+            role === "user" ? "flex-end" : "flex-start"
 
         const bubble = document.createElement("div")
         bubble.style.maxWidth = "80%"
@@ -164,9 +190,9 @@ export default class extends Controller {
         replies.forEach((reply) => {
             const btn = document.createElement("button")
             btn.type = "button"
-            btn.dataset.action = "chatbot#quickReply"
             btn.dataset.intent = reply.intent
             btn.innerText = reply.label
+
             btn.style.marginRight = "6px"
             btn.style.marginBottom = "6px"
             btn.style.padding = "4px 10px"
@@ -175,6 +201,7 @@ export default class extends Controller {
             btn.style.background = "#ffffff"
             btn.style.fontSize = "11px"
             btn.style.cursor = "pointer"
+
             this.quickRepliesTarget.appendChild(btn)
         })
     }
