@@ -112,27 +112,28 @@
         font-size: 13px;
       "
     >
-      <% (session[:chatbot_history] || []).each do |msg| %>
-        <% if msg["role"] == "bot" %>
-          <div style="display:flex; justify-content:flex-start; margin-bottom:6px;">
-            <div style="max-width:80%; background:#ffffff; color:#111827; border-radius:16px; padding:6px 9px; border:1px solid #e5e7eb; white-space:pre-wrap;">
-              <%= msg["text"] %>
+      <% history = (session[:chatbot_history] || []) %>
+      <% if history.any? %>
+        <% history.each do |msg| %>
+          <% if msg["role"] == "bot" %>
+            <div style="display:flex; justify-content:flex-start; margin-bottom:6px;">
+              <div style="max-width:80%; background:#ffffff; color:#111827; border-radius:16px; padding:6px 9px; border:1px solid #e5e7eb; white-space:pre-wrap;">
+                <%= msg["text"] %>
+              </div>
             </div>
-          </div>
-        <% else %>
-          <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-            <div style="max-width:80%; background:#a855f7; color:#ffffff; border-radius:16px; padding:6px 9px; white-space:pre-wrap;">
-              <%= msg["text"] %>
+          <% else %>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+              <div style="max-width:80%; background:#a855f7; color:#ffffff; border-radius:16px; padding:6px 9px; white-space:pre-wrap;">
+                <%= msg["text"] %>
+              </div>
             </div>
-          </div>
+          <% end %>
         <% end %>
-      <% end %>
-
-      <% if (session[:chatbot_history] || []).empty? %>
+      <% else %>
         <div style="display:flex; justify-content:flex-start; margin-bottom:6px;">
           <div style="max-width:80%; background:#ffffff; color:#111827; border-radius:16px; padding:6px 9px; border:1px solid #e5e7eb; white-space:pre-wrap;">
             Hi there! 👋 I'm your GiftWise Assistant.
-            Ask me about upcoming events, recipients, or wishlist — or tap a suggested question below.
+            Ask me about upcoming events, recipients, budgets or wishlist — or tap a suggested question below.
           </div>
         </div>
       <% end %>
@@ -143,7 +144,7 @@
       data-chatbot-target="quickReplies"
       style="padding: 0 10px 6px 10px; display:flex; flex-wrap:wrap;"
     >
-      <%# JS will fill this from /chatbot/message %>
+      <%# JS fills this from /chatbot/message %>
     </div>
 
     <!-- Input -->
