@@ -148,7 +148,7 @@
                           class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" do %>
               <% if has_suggestions %>
                 <span class="mr-1">↻</span>
-                <span>Regenerate</span>
+                <span>Regenerate ideas</span>
               <% else %>
                 <span class="mr-1">✨</span>
                 <span>Generate Ideas</span>
@@ -160,7 +160,7 @@
             <!-- FIVE clean cards per row with consistent square images -->
             <div class="grid grid-cols-5 auto-cols-fr gap-3 mt-3" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
               <% suggestions.first(5).each do |idea| %>
-                <div class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50 flex flex-col h-full">
+                <div class="ai-gift-card border border-gray-100 rounded-2xl overflow-hidden bg-gray-50 flex flex-col h-full">
                   <% if idea.image_url.present? %>
                     <img src="<%= idea.image_url %>"
                          alt="<%= idea.title %>"

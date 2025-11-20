@@ -27,6 +27,12 @@
           Welcome, <%= current_user.name.presence || "there" %>!
         </span>
 
+        <%= link_to ai_gift_library_path,
+                    class: "inline-flex items-center justify-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition",
+                    title: "AI Gift Library" do %>
+          AI Library
+        <% end %>
+
         <%= link_to wishlists_path,
                     class: "w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#fee2e2] transition",
                     title: "Wishlist" do %>

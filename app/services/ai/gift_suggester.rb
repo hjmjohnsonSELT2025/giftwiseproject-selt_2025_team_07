@@ -1,4 +1,6 @@
 # app/services/ai/gift_suggester.rb
+require "set"
+
 module Ai
   class GiftSuggester
     def initialize(user:, event_recipient:, gemini_client: nil, unsplash_client: nil)
@@ -13,6 +15,8 @@ module Ai
 
     # round_type: "initial" or "regenerate"
     # Returns an array of AiGiftSuggestion records
+    # round_type: "initial" or "regenerate"
+    # Returns an array of AiGiftSuggestion records
     def call(round_type: "initial")
       budget_cents = compute_effective_budget_cents
 
@@ -21,26 +25,42 @@ module Ai
         recipient_id: @recipient.id
       ).order(given_on: :desc)
 
+      # 🔹 NEW: collect previous AI suggestions for this event_recipient
+      previous_ai_titles = AiGiftSuggestion.where(event_recipient: @event_recipient)
+                                           .pluck(:title)
+                                           .compact
+
       prompt = Ai::PromptBuilder.new(
         user: @user,
         event: @event,
         recipient: @recipient,
         event_recipient: @event_recipient,
         past_gifts: past_gifts,
-        budget_cents: budget_cents
+        budget_cents: budget_cents,
+        previous_ai_titles: previous_ai_titles
       ).build
 
       idea_hashes = @gemini_client.generate_gift_ideas(prompt)
 
       suggestions = []
 
+      # For fast case-insensitive lookup
+      existing_normalized_titles = previous_ai_titles.map { |t| normalize_title(t) }.to_set
+      new_batch_titles = Set.new
+
       AiGiftSuggestion.transaction do
         idea_hashes.each do |idea|
-          title = idea["title"].to_s.strip
+          raw_title = idea["title"]
+          title = raw_title.to_s.strip
           next if title.blank? # skip bad entries
 
-          # Because your current Gemini prompt returns only title/description,
-          # these might be nil for now — that's okay.
+          normalized = normalize_title(title)
+
+          next if existing_normalized_titles.include?(normalized)
+          next if new_batch_titles.include?(normalized)
+
+          new_batch_titles << normalized
+
           description      = idea["description"]
           estimated_price  = idea["estimated_price"]
           category         = idea["category"]
@@ -65,8 +85,13 @@ module Ai
         end
       end
 
+      # NOTE:
+      # If Gemini returns many duplicates of old titles, we might end up
+      # with fewer than 5 new suggestions here. For now we return however
+      # many truly-new ideas we were able to save, without repeating.
       suggestions
     end
+
 
     private
 
@@ -93,6 +118,10 @@ module Ai
       end
 
       nil
+    end
+
+    def normalize_title(title)
+      title.to_s.strip.downcase
     end
 
     def decimal_to_cents(decimal)

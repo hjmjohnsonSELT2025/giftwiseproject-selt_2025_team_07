@@ -101,5 +101,35 @@ Then("I should see at least 1 AI gift idea card for {string}") do |recipient_nam
     idea_cards = all("div.border.border-gray-100.rounded-2xl")
     expect(idea_cards.size).to be >= 1
   end
+
+  # features/step_definitions/ai_gift_suggestions_steps.rb
+
+  Given("AI gift suggestions already exist for {string} on {string}:") do |recipient_name, event_name, table|
+    user = @current_user || User.last # depending on your auth setup
+
+    event = user.events.find_by!(event_name: event_name)
+    recipient = user.recipients.find_by!(name: recipient_name)
+    event_recipient = EventRecipient.find_by!(user: user, event: event, recipient: recipient)
+
+    table.hashes.each do |row|
+      AiGiftSuggestion.create!(
+        user: user,
+        event: event,
+        recipient: recipient,
+        event_recipient: event_recipient,
+        title: row.fetch("title"),
+        description: "Existing suggestion for testing",
+        round_type: "initial"
+      )
+    end
+  end
+
+  When("I click {string} for {string}") do |button_text, recipient_name|
+    # Assuming you show a regenerate button per recipient on the page
+    within(:xpath, "//div[contains(., '#{recipient_name}')]") do
+      click_button(button_text)
+    end
+  end
+
 end
 
