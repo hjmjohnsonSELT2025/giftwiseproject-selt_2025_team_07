@@ -242,16 +242,20 @@
 
 
 
-  <!-- Chatbot Floating Button - FORCE bottom-right -->
-  <div
-    style="
-    position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 9999;
-    "
-  >
-    <%= link_to chatbot_path do %>
+
+
+  <!-- Chatbot: floating button + side panel -->
+  <div data-controller="chatbot">
+    <!-- Floating Button (bottom-right) -->
+    <div
+      data-action="click->chatbot#open"
+      style="
+      position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+      "
+    >
       <div
         style="
         width: 56px;
@@ -270,9 +274,60 @@
       >
         <img src="/assets/chatbot.png" alt="Chatbot" style="width: 40px; height: 40px;">
       </div>
-    <% end %>
+    </div>
+
+    <!-- Slide-in Chatbot Panel -->
+    <div
+      data-chatbot-target="panel"
+      style="
+      position: fixed;
+        top: 0;
+        right: -380px;           /* hidden by default */
+        width: 380px;
+        height: 100%;
+        background: #ffffff;
+        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+        border-radius: 16px 0 0 16px;
+        z-index: 10000;
+        transition: right 0.35s ease;
+        display: flex;
+        flex-direction: column;
+      "
+    >
+      <!-- Panel header with Close button -->
+      <div style="padding: 16px 20px; border-bottom: 1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between;">
+        <h2 class="text-base font-semibold text-gray-900">GiftWise Assistant</h2>
+        <button
+          type="button"
+          data-action="click->chatbot#close"
+          style="
+          border: none;
+            background: transparent;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+            color: #6b7280;
+          "
+          aria-label="Close chatbot"
+        >
+          &times;
+        </button>
+      </div>
+
+      <!-- Placeholder chatbot body -->
+      <div style="padding: 16px 20px; overflow-y: auto; flex: 1;">
+        <p class="text-sm text-gray-600">
+          This is a placeholder for your chatbot. You can later add messages,
+          input box, and backend integration here.
+        </p>
+      </div>
+    </div>
   </div>
-  <!-- Chatbot Floating Button - FORCE bottom-right END END END END END END END  -->
+  <!-- End Chatbot -->
+
+
+
+
 
 
 
