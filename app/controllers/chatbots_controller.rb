@@ -1,404 +1,472 @@
+# app/controllers/chatbots_controller.rb
 class ChatbotsController < ApplicationController
   before_action :authenticate_user!
 
-  # Renders the sidebar widget (mounted from dashboard)
-  def widget
-    session[:chatbot_history] ||= []
-
-    if session[:chatbot_history].empty?
-      push_message("bot", welcome_text)
-    end
-
-    render :widget
-  end
-
-  # AJAX endpoint the Stimulus controller calls
   def message
-    text   = params[:message].to_s.strip
-    intent = params[:intent].presence
-
     session[:chatbot_history] ||= []
+    session[:chatbot_mode]    ||= "main"  # "main" or "nav"
+    @custom_quick_replies       = nil
 
-    # Store user message if they typed something
-    push_message("user", text) if text.present?
-
-    close_panel = false
-    bot_text    = nil
-    replies     = []
-
-    case intent
-      # -------- reload / reset chat (keep panel open) --------
-    when "reset_session", "reload_chat"
-      session[:chatbot_history] = []
-      bot_text = welcome_text
-      replies  = default_quick_replies
-
-      # -------- exit chat: clear history + tell front-end to close --------
-    when "exit_chat"
-      session[:chatbot_history] = []
-      bot_text    = "Okay, closing the assistant for now. Tap the chatbot icon again whenever you need help."
-      replies     = []
-      close_panel = true
-
+    if params[:command].present?
+      handle_command(params[:command])
     else
-      bot_text, replies = handle_intent(intent, text)
+      handle_message
     end
-
-    # Store bot reply
-    push_message("bot", bot_text) if bot_text.present?
 
     render json: {
       messages:      session[:chatbot_history],
-      quick_replies: replies,
-      close:         close_panel
+      quick_replies: current_quick_replies
     }
+  rescue => e
+    Rails.logger.error("Chatbot MESSAGE error: #{e.class} - #{e.message}")
+    render json: {
+      messages:      session[:chatbot_history] || [],
+      quick_replies: main_quick_replies
+    }, status: :internal_server_error
   end
 
   private
 
-  # ---------- Core helpers ----------
+  # ---------- Commands (reload / exit) ----------
 
-  def welcome_text
-    "Hi #{current_user.name.presence || 'there'} 👋\n" \
-      "I can help you with events, budgets, recipients, wishlists and navigation inside GiftWise.\n" \
-      "You can tap a suggestion below or type a question."
+  def handle_command(command)
+    case command
+    when "reset"
+      session[:chatbot_history] = [
+        bot_msg(
+          "Conversation restarted ✅\n\n" \
+            "Hi again! I can help with upcoming events, recipients, wishlist and budgets.\n" \
+            "Tap one of the suggestions below to get started."
+        )
+      ]
+      session[:chatbot_mode] = "main"
+
+    when "exit"
+      session[:chatbot_history] = []
+      session[:chatbot_mode]    = "main"
+    end
   end
 
-  def push_message(role, text)
-    return if text.blank?
+  # ---------- Normal messages ----------
 
-    session[:chatbot_history] << {
-      role: role,                      # "user" or "bot"
-      text: text,
-      at:   Time.current.strftime("%H:%M")
-    }
+  def handle_message
+    text   = params[:text].to_s.strip
+    intent = params[:intent].presence
+
+    return if text.blank? && intent.blank?
+
+    session[:chatbot_history] << user_msg(text) if text.present?
+
+    bot_text =
+      if intent.present?
+        respond_to_intent(intent)
+      else
+        respond_to_free_text(text)
+      end
+
+    session[:chatbot_history] << bot_msg(bot_text) if bot_text.present?
   end
 
-  # Decide what to do for each intent
-  def handle_intent(intent, text)
-    case
-      # ---------- budgets ----------
-    when intent == "upcoming_total_budget"
-      [upcoming_total_budget_text, default_quick_replies]
+  # ---------- Intent routing ----------
 
-    when intent == "per_event_budget"
-      [per_event_budget_intro_text, per_event_budget_replies]
+  def respond_to_intent(intent)
+    # menu switching
+    case intent
+    when "nav_menu"
+      session[:chatbot_mode] = "nav"
+      return nav_menu_text
+    when "main_menu"
+      session[:chatbot_mode] = "main"
+      return main_menu_text
+    end
 
-    when intent&.start_with?("event_budget_")
-      event_budget_response(intent)
+    # Single event budget pick like "budget_event_12"
+    if intent.start_with?("budget_event_")
+      event_id = intent.split("budget_event_").last.to_i
+      return single_event_budget_breakdown(event_id)
+    end
 
-      # ---------- recipients ----------
-    when intent == "recipients_summary"
-      [recipients_summary_text, default_quick_replies]
+    case intent
+    when "summary_upcoming_events"
+      upcoming_events_summary
 
-      # ---------- navigation-related ----------
-    when intent == "upcoming_events_brief"
-      [upcoming_events_brief_text, default_quick_replies]
+    when "summary_recipients"
+      recipients_summary
 
-    when intent == "help_navigation"
-      [help_navigation_text, navigation_quick_replies]
+    when "summary_wishlist"
+      wishlist_summary
 
-    when intent == "nav_add_event"
-      [nav_add_event_text, navigation_quick_replies]
+      # budgets
+    when "summary_budgets_per_event"
+      safe_upcoming_events_per_event_budget
 
-    when intent == "nav_add_recipient"
-      [nav_add_recipient_text, navigation_quick_replies]
+    when "budget_single_event"
+      prompt_choose_event_for_budget
 
-    when intent == "nav_add_recipient_to_event"
-      [nav_add_recipient_to_event_text, navigation_quick_replies]
+      # navigation
+    when "nav_add_event"       then nav_add_event
+    when "nav_link_recipients" then nav_link_recipients
+    when "nav_add_recipient"   then nav_add_recipient
+    when "nav_edit_recipient"  then nav_edit_recipient
+    when "nav_view_wishlist"   then nav_view_wishlist
+    when "nav_edit_profile"    then nav_edit_profile
+    when "nav_change_password" then nav_change_password
+    when "nav_view_events"     then nav_view_events
+    when "nav_view_recipients" then nav_view_recipients
 
-    when intent == "nav_view_wishlist"
-      [nav_view_wishlist_text, navigation_quick_replies]
-
-    when intent == "nav_edit_profile"
-      [nav_edit_profile_text, navigation_quick_replies]
-
-      # ---------- fallback ----------
     else
-      [fallback_text(text, intent), default_quick_replies]
+      "Hmm, I didn’t understand that option. " \
+        "Try another quick action or tap *Back to main menu*."
+    end
+  end
+
+  # ---------- Free-text routing ----------
+
+  def respond_to_free_text(text)
+    down = text.downcase
+
+    # data
+    if down.include?("budget") && down.include?("single") && down.include?("event")
+      prompt_choose_event_for_budget
+    elsif down.include?("budget") && (down.include?("upcoming") || down.include?("all events"))
+      safe_upcoming_events_per_event_budget
+    elsif down.include?("upcoming events")
+      upcoming_events_summary
+    elsif down.include?("recipient")
+      recipients_summary
+    elsif down.include?("wishlist")
+      wishlist_summary
+
+      # navigation
+    elsif down.include?("how do i add an event")
+      nav_add_event
+    elsif down.include?("link recipients") || down.include?("link a recipient")
+      nav_link_recipients
+    elsif down.include?("add a recipient") || down.include?("create a recipient")
+      nav_add_recipient
+    elsif down.include?("edit recipient")
+      nav_edit_recipient
+    elsif down.include?("edit profile")
+      nav_edit_profile
+    elsif down.include?("change password")
+      nav_change_password
+    elsif down.include?("all events")
+      nav_view_events
+    elsif down.include?("all recipients")
+      nav_view_recipients
+    else
+      main_menu_text
     end
   end
 
   # ---------- Quick replies ----------
 
-  def default_quick_replies
-    replies = [
-      { label: "All upcoming events total budget",     intent: "upcoming_total_budget" },
-      { label: "Budget for a specific upcoming event", intent: "per_event_budget" },
-      { label: "Show upcoming events",                 intent: "upcoming_events_brief" },
-      { label: "Show my recipients",                   intent: "recipients_summary" },
-      { label: "Navigation help",                      intent: "help_navigation" },
-      { label: "Exit chat / reset",                    intent: "reset_session" }
-    ]
+  def current_quick_replies
+    return @custom_quick_replies if @custom_quick_replies.present?
 
-    # Hide event-related options if no upcoming events
-    events_exist = current_user.events.where("event_date >= ?", Date.today).exists?
-    unless events_exist
-      replies.reject! do |r|
-        %w[upcoming_total_budget per_event_budget upcoming_events_brief].include?(r[:intent])
-      end
+    if session[:chatbot_mode] == "nav"
+      navigation_quick_replies
+    else
+      main_quick_replies
     end
-
-    # Hide recipients option if none
-    recipients_exist = current_user.recipients.exists?
-    replies.reject! { |r| r[:intent] == "recipients_summary" } unless recipients_exist
-
-    replies
   end
 
-  # Navigation-specific quick replies (shown after a nav answer)
+  def main_quick_replies
+    [
+      { label: "Upcoming events",              intent: "summary_upcoming_events" },
+      { label: "My recipients",                intent: "summary_recipients" },
+      { label: "Wishlist overview",            intent: "summary_wishlist" },
+      { label: "Budget: all upcoming events",  intent: "summary_budgets_per_event" },
+      { label: "Budget: single event",         intent: "budget_single_event" },
+      { label: "Navigation help",              intent: "nav_menu" }
+    ]
+  end
+
   def navigation_quick_replies
     [
-      { label: "How do I add an event?",               intent: "nav_add_event" },
-      { label: "How do I add a recipient?",            intent: "nav_add_recipient" },
-      { label: "How do I link recipients to an event?",intent: "nav_add_recipient_to_event" },
-      { label: "How do I see my wishlist?",            intent: "nav_view_wishlist" },
-      { label: "How do I edit my profile/password?",   intent: "nav_edit_profile" },
-      { label: "Back to main options",                 intent: "reset_session" }
+      { label: "How do I add an event?",           intent: "nav_add_event" },
+      { label: "How do I link recipients?",        intent: "nav_link_recipients" },
+      { label: "How do I add a recipient?",        intent: "nav_add_recipient" },
+      { label: "How do I edit a recipient?",       intent: "nav_edit_recipient" },
+      { label: "How do I view my wishlist?",       intent: "nav_view_wishlist" },
+      { label: "How do I edit my profile?",        intent: "nav_edit_profile" },
+      { label: "How do I change my password?",     intent: "nav_change_password" },
+      { label: "How do I see all events?",         intent: "nav_view_events" },
+      { label: "How do I see all recipients?",     intent: "nav_view_recipients" },
+      { label: "Back to main menu",                intent: "main_menu" }
     ]
   end
 
-  # ---------- Budget: all upcoming events ----------
+  # ---------- Shared scopes ----------
 
-  def upcoming_total_budget_text
-    events = current_user.events.where("event_date >= ?", Date.today)
+  def upcoming_events_scope
+    @upcoming_events_scope ||= current_user
+                                 .events
+                                 .where("event_date >= ?", Date.today)
+                                 .order(:event_date)
+  end
+
+  def event_recipient_scope(event_id)
+    EventRecipient
+      .includes(:recipient)
+      .where(user_id: current_user.id, event_id: event_id)
+  end
+
+  # ---------- DATA ANSWERS ----------
+
+  # 1) Upcoming events summary list
+  def upcoming_events_summary
+    events = upcoming_events_scope
 
     if events.empty?
-      return "You don’t have any upcoming events yet. Add one from the dashboard to start tracking budgets."
+      "You don’t have any upcoming events yet.\n\n" \
+        "From the dashboard, click **+ Add Event** to create your first event."
+    else
+      lines = events.limit(5).map do |e|
+        date   = e.event_date&.strftime("%b %-d, %Y")
+        budget =
+          if e.budget.present?
+            "$#{e.budget.to_i}"
+          else
+            "no budget set"
+          end
+        "• #{e.event_name} on #{date} — #{budget}"
+      end
+      more = events.count > 5 ? "\n…plus #{events.count - 5} more event(s)." : ""
+      "Here are your upcoming events:\n\n#{lines.join("\n")}#{more}"
     end
-
-    total_budget = events.sum(:budget) || 0
-
-    lines = []
-    lines << "Here’s the planned budget for your upcoming events:\n"
-
-    events.order(:event_date).each do |e|
-      budget   = e.budget || 0
-      date_str = e.event_date&.strftime("%b %d, %Y") || "no date"
-      lines << "- #{e.event_name} on #{date_str}: $#{sprintf('%.2f', budget)}"
-    end
-
-    lines << ""
-    lines << "Overall total across upcoming events: $#{sprintf('%.2f', total_budget)}"
-    lines.join("\n")
   end
 
-  # ---------- Budget: single event ----------
+  # 2) Helper wrapper so failures don’t kill the button
+  def safe_upcoming_events_per_event_budget
+    upcoming_events_per_event_budget
+  rescue => e
+    Rails.logger.error("Chatbot budget-all error: #{e.class} - #{e.message}")
+    "I had trouble calculating budgets right now 😅. Please try again in a moment."
+  end
 
-  def per_event_budget_intro_text
-    events = current_user.events.where("event_date >= ?", Date.today)
+  # Budget for ALL upcoming events: per event + total
+  def upcoming_events_per_event_budget
+    events = upcoming_events_scope
+
     if events.empty?
-      "You don’t have any upcoming events yet, so I can’t calculate a per-event budget. Add an event from the dashboard first."
-    else
-      "Pick one of your upcoming events below to see its total budget across all recipients."
+      return "You don’t have any upcoming events yet, so there are no upcoming budgets."
     end
-  end
-
-  def per_event_budget_replies
-    events = current_user.events
-                         .where("event_date >= ?", Date.today)
-                         .order(:event_date)
-                         .limit(6)
-
-    events.map do |e|
-      {
-        label:  "#{e.event_name} (#{e.event_date&.strftime('%b %d') || 'no date'})",
-        intent: "event_budget_#{e.id}"
-      }
-    end
-  end
-
-  def event_budget_response(intent)
-    event_id = intent.split("event_budget_").last.to_i
-    event    = current_user.events.find_by(id: event_id)
-
-    unless event
-      return [
-        "I couldn’t find that event. It may have been deleted or might not belong to your account.",
-        default_quick_replies
-      ]
-    end
-
-    rows            = EventRecipient.where(user_id: current_user.id, event_id: event.id)
-    allocated_total = rows.sum(:budget_allocated) || 0
-    event_budget    = event.budget || 0
-    date_str        = event.event_date&.strftime("%b %d, %Y") || "no date"
 
     lines = []
-    lines << "Budget details for “#{event.event_name}” (#{date_str}):"
-    lines << ""
+    grand = 0.0
 
-    if rows.exists?
-      lines << "- Sum of per-recipient budgets: $#{sprintf('%.2f', allocated_total)}"
-    else
-      lines << "- No per-recipient budgets found in event–recipient allocations."
+    events.each do |e|
+      allocated = event_recipient_scope(e.id).sum(:budget_allocated).to_f
+
+      if allocated.zero? && e.budget.present?
+        allocated = e.budget.to_f
+      end
+
+      grand += allocated
+      date_label = e.event_date&.strftime("%b %-d, %Y") || "no date"
+      lines << "• #{e.event_name} (#{date_label}) — $#{allocated.round(2)}"
     end
 
-    lines << "- Event-level budget: $#{sprintf('%.2f', event_budget)}"
-
-    if allocated_total > 0
-      diff = event_budget - allocated_total
-      lines << ""
-      lines << "Difference (event-level budget − per-recipient total): $#{sprintf('%.2f', diff)}"
-    end
-
-    [lines.join("\n"), default_quick_replies]
+    "Here’s the budget for your upcoming events:\n\n" \
+      "#{lines.join("\n")}\n\n" \
+      "Total planned budget across these events: **$#{grand.round(2)}**."
   end
 
-  # ---------- Recipients summary ----------
+  # 3) Ask user to pick ONE upcoming event for detailed breakdown
+  def prompt_choose_event_for_budget
+    events = upcoming_events_scope
 
-  def recipients_summary_text
-    recs = current_user.recipients.order(:name).limit(10)
+    if events.empty?
+      return "You don’t have any upcoming events yet, so there’s nothing to break down.\n\n" \
+        "Start by creating an event from the dashboard."
+    end
+
+    @custom_quick_replies =
+      events.map do |e|
+        label = if e.event_date.present?
+                  "#{e.event_name} (#{e.event_date.strftime('%b %-d')})"
+                else
+                  e.event_name
+                end
+        { label: label, intent: "budget_event_#{e.id}" }
+      end + [{ label: "Back to main menu", intent: "main_menu" }]
+
+    "Choose an event below to see a budget breakdown by recipient."
+  end
+
+
+
+  # 4) Detailed budget for a single event (per recipient)
+  def single_event_budget_breakdown(event_id)
+    event = current_user.events.find_by(id: event_id)
+    return "I couldn’t find that event anymore. Please choose again." unless event
+
+    ers = event_recipient_scope(event.id)
+
+    if ers.empty?
+      if event.budget.present?
+        return "For **#{event.event_name}**, no recipient-specific budgets are set yet.\n\n" \
+          "The overall event budget is **$#{event.budget.to_i}**.\n" \
+          "You can allocate budgets per recipient on the event details page."
+      else
+        return "For **#{event.event_name}**, there are no recipient budgets and no overall budget set yet."
+      end
+    end
+
+    # Do we actually have per-recipient allocations?
+    any_allocated = ers.any? { |er| er.budget_allocated.present? && er.budget_allocated.to_f > 0 }
+
+    if !any_allocated
+      # Only event-level budget is used
+      if event.budget.present?
+        "For **#{event.event_name}**, you haven’t set budgets per recipient yet.\n\n" \
+          "The total budget for this event is **$#{event.budget.to_i}**.\n" \
+          "Once you allocate amounts per recipient, I’ll show a detailed breakdown here."
+      else
+        "For **#{event.event_name}**, there are recipients but no budgets have been set yet."
+      end
+    else
+      lines = ers.map do |er|
+        name = er.recipient&.name || "Recipient ##{er.recipient_id}"
+        amt  = er.budget_allocated.to_f
+        label_amt = amt.positive? ? "$#{amt.to_i}" : "not set"
+        "• #{name} — #{label_amt}"
+      end
+
+      total = ers.sum(:budget_allocated).to_f
+      total = event.budget.to_f if total.zero? && event.budget.present?
+
+      "Budget breakdown for **#{event.event_name}**:\n\n" \
+        "#{lines.join("\n")}\n\n" \
+        "Total for this event: **$#{total.to_i}**."
+    end
+  end
+
+
+
+
+
+  # 5) Recipient summary
+  def recipients_summary
+    recs = current_user.recipients.order(:name)
 
     if recs.empty?
-      return "You don’t have any recipients yet. Use the Recipients card on the dashboard to add someone you give gifts to."
-    end
-
-    total = current_user.recipients.count
-    lines = ["Here are some of your recipients:\n"]
-
-    recs.each do |r|
-      line = "- #{r.name}"
-      bits = []
-      bits << r.relationship if r.relationship.present?
-      bits << r.email if r.email.present?
-      line << " (#{bits.join(' · ')})" if bits.any?
-      lines << line
-    end
-
-    if total > recs.size
-      lines << ""
-      lines << "…and #{total - recs.size} more. You can see full details on the Recipients page."
+      "You don’t have any recipients yet.\n\n" \
+        "From the dashboard, click the **Recipients** card then **New Recipient** to add someone."
     else
-      lines << ""
-      lines << "You can see full details and edit them on the Recipients page."
+      names = recs.limit(8).map { |r| "• #{r.name}" }.join("\n")
+      more  = recs.count > 8 ? "\n…plus #{recs.count - 8} more recipient(s)." : ""
+      "You currently have #{recs.count} recipient(s):\n\n#{names}#{more}"
     end
-
-    lines.join("\n")
   end
 
-  # ---------- Other helpers ----------
+  # 6) Wishlist overview
+  def wishlist_summary
+    items = Wishlist.where(user_id: current_user.id)
 
-  def upcoming_events_brief_text
-    events = current_user.events
-                         .where("event_date >= ?", Date.today)
-                         .order(:event_date)
-                         .limit(5)
-
-    if events.empty?
-      "You don’t have any upcoming events yet. Use the Events card on the dashboard to add your first one."
+    if items.empty?
+      "Your wishlist is empty.\n\n" \
+        "When you save gift ideas, they’ll appear on the **Wishlist** page (heart icon in the header)."
     else
-      lines = ["Here are your next few events:\n"]
-      events.each do |e|
-        date_str          = e.event_date&.strftime("%b %d, %Y") || "no date"
-        primary_recipient = e.recipients.first&.name
-        label             = primary_recipient.present? ? "#{e.event_name} for #{primary_recipient}" : e.event_name
-        lines << "- #{label} on #{date_str}"
+      grouped = items.includes(:recipient).group_by(&:recipient)
+
+      lines = grouped.map do |recipient, rec_items|
+        name = recipient&.name || "Unassigned recipient"
+        "• #{name}: #{rec_items.size} item(s)"
       end
-      lines.join("\n")
+
+      "Here’s a quick wishlist overview:\n\n#{lines.join("\n")}"
     end
   end
 
-  def help_navigation_text
-    <<~TEXT.strip
-      Here are some common things I can help you with inside GiftWise:
+  # ---------- NAVIGATION ANSWERS ----------
 
-      • How do I add an event?
-      • How do I add a recipient?
-      • How do I link recipients to an event?
-      • How do I see my wishlist?
-      • How do I edit my profile or password?
-
-      You can tap any of these options below to see step-by-step instructions.
-    TEXT
+  def nav_menu_text
+    "Navigation help:\n\n" \
+      "• How to add events\n" \
+      "• How to link recipients to events\n" \
+      "• How to add / edit recipients\n" \
+      "• How to view wishlist, edit profile, or change password\n\n" \
+      "Tap one of the navigation questions below, or **Back to main menu** to return."
   end
 
-  def nav_add_event_text
-    <<~TEXT.strip
-      Here’s how to add a new event:
-
-      1. Go to the Dashboard (you’re probably already there after login).
-      2. Click on the “Events” card, or use the “+ Add Event” button in the Upcoming Events section.
-      3. On the “New Event” page:
-         • Enter the event name (required).
-         • Choose the event date.
-         • Optionally add location, budget and description.
-      4. Click “Create Event”.
-
-      After creating it, you’ll see the event under “Upcoming Events” and in the Events list page.
-    TEXT
+  def nav_add_event
+    "To add an event:\n" \
+      "1. From the **Dashboard**, click the **Events** card or the **+ Add Event** button.\n" \
+      "2. Fill in the event name, date, budget and other details.\n" \
+      "3. Click **Create Event** to save it."
   end
 
-  def nav_add_recipient_text
-    <<~TEXT.strip
-      To add a new recipient (person you give gifts to):
-
-      1. From the Dashboard, click on the “Recipients” card.
-      2. On the Recipients page, click “New Recipient”.
-      3. Fill in:
-         • Name (required).
-         • Email, relationship, age, hobbies, likes, dislikes, budget, etc. (optional).
-      4. Click “Create Recipient”.
-
-      The new recipient will appear in the recipients table and can be linked to events.
-    TEXT
+  def nav_link_recipients
+    "To link recipients to an event:\n" \
+      "1. Open the event (from **Dashboard > Events** or the **All Events** page).\n" \
+      "2. In the event details screen, find the **Recipients** / **Add Recipient** section.\n" \
+      "3. Select one or more recipients and save.\n" \
+      "After that, budgets and gift ideas can be tracked per recipient for that event."
   end
 
-  def nav_add_recipient_to_event_text
-    <<~TEXT.strip
-      To link recipients to an event:
-
-      1. First make sure you have at least one Event and one Recipient created.
-      2. Go to the Events page and click on an event you want to manage.
-      3. On the event details page, look for the section where you can add or manage recipients
-         (for example, checkboxes or an “Add recipient” button).
-      4. Select the recipient(s) you want to attach to the event.
-      5. Save/update the event.
-
-      Once linked, you’ll see those recipients associated with that event, and the AI gift suggestions
-      and budgets can use that information.
-    TEXT
+  def nav_add_recipient
+    "To add a recipient:\n" \
+      "1. From the **Dashboard**, click the **Recipients** card or the **New Recipient** button.\n" \
+      "2. Enter their name (required) plus any optional details.\n" \
+      "3. Click **Create Recipient** to save."
   end
 
-  def nav_view_wishlist_text
-    <<~TEXT.strip
-      To see your wishlist:
-
-      1. Look at the top-right of the app header.
-      2. Click the heart icon (❤️) – that’s the Wishlist shortcut.
-      3. You’ll be taken to the Wishlist page, where you can see items you’ve saved
-         from AI gift suggestions or added manually.
-
-      From there you can review ideas, prices and notes before buying gifts.
-    TEXT
+  def nav_edit_recipient
+    "To edit a recipient:\n" \
+      "1. Go to the **Recipients** page.\n" \
+      "2. Click on a recipient row or use the **Edit** button.\n" \
+      "3. Update the details and click **Update Recipient**."
   end
 
-  def nav_edit_profile_text
-    <<~TEXT.strip
-      To edit your profile or password:
-
-      1. In the top-right corner of the app header, click your profile avatar (small circle).
-      2. In the dropdown:
-         • Click “Edit Profile” to update your name, email and other details.
-         • Click “Change password” to update your password.
-      3. Make your changes and click the Save/Update button.
-
-      These options are always available from the profile menu in the header.
-    TEXT
+  def nav_view_wishlist
+    "To view your wishlist:\n" \
+      "1. Click the **heart icon** in the top header, or open the **Wishlist** page.\n" \
+      "2. You’ll see saved gift ideas grouped by recipient."
   end
 
-  def fallback_text(text, _intent)
-    if text.blank?
-      "I didn’t quite get that. You can tap one of the suggestions below, or ask about your events, budgets, recipients, or navigation."
-    else
-      "I’m still a simple helper bot 🙂\n\nRight now I understand things like:\n" \
-        "- Show upcoming events\n" \
-        "- All upcoming events total budget\n" \
-        "- Budget for a specific upcoming event\n" \
-        "- Show my recipients\n" \
-        "- How do I add an event / recipient?\n" \
-        "- How do I see my wishlist?\n\n" \
-        "You can also tap one of the suggestions below."
-    end
+  def nav_edit_profile
+    "To edit your profile:\n" \
+      "1. Click the **profile icon** in the top-right corner.\n" \
+      "2. Choose **Edit Profile**.\n" \
+      "3. Update your information and save."
+  end
+
+  def nav_change_password
+    "To change your password:\n" \
+      "1. Click the **profile icon** in the top-right corner.\n" \
+      "2. Select **Change password**.\n" \
+      "3. Enter your current password and new password, then save."
+  end
+
+  def nav_view_events
+    "To see all events:\n" \
+      "1. From the **Dashboard**, click the **Events** card or the **View all** link under Upcoming Events.\n" \
+      "2. You’ll see a list of upcoming and past events."
+  end
+
+  def nav_view_recipients
+    "To see all recipients:\n" \
+      "1. From the **Dashboard**, click the **Recipients** card.\n" \
+      "2. This opens the Recipients page with your full list."
+  end
+
+  def main_menu_text
+    "Here’s what I can help with right now:\n\n" \
+      "• Show **upcoming events**, **recipients**, **wishlist**\n" \
+      "• Show **budget for all upcoming events** or **budget for a single event**\n" \
+      "• Help you navigate: adding events, linking recipients, editing profile, etc.\n\n" \
+      "Tap one of the suggestions below, or ask your question in your own words."
+  end
+
+  # ---------- Helpers for storing messages ----------
+
+  def user_msg(text)
+    { "role" => "user", "text" => text.to_s }
+  end
+
+  def bot_msg(text)
+    { "role" => "bot", "text" => text.to_s }
   end
 end
