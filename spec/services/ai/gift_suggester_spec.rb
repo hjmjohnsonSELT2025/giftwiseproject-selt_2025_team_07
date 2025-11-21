@@ -3,212 +3,151 @@ require "rails_helper"
 RSpec.describe Ai::GiftSuggester do
   let(:user) do
     User.create!(
-      name: "Test User",
-      email: "test@example.com",
-      password: "Password1!"
+      name: "Tester",
+      email: "tester@example.com",
+      password: "Password@123"
     )
   end
 
   let(:event) do
-    user.events.create!(
-      event_name: "Birthday",
-      event_date: Date.today + 7.days,
-      budget: 120
-    )
+    Event.create!(user: user, event_name: "Birthday", event_date: Date.today)
   end
 
   let(:recipient) do
-    user.recipients.create!(
-      name: "Mom",
-      relationship: "Mother",
-      age: 55,
-      hobbies: "Reading, gardening",
-      likes: "Books, plants",
-      dislikes: "Perfume"
-    )
+    Recipient.create!(name: "Sam", relationship: "Friend", user: user)
   end
 
   let(:event_recipient) do
-    EventRecipient.create!(
-      user: user,
-      event: event,
-      recipient: recipient,
-      budget_allocated: 60
-    )
+    EventRecipient.create!(user: user, event: event, recipient: recipient)
   end
 
-  let(:fake_gemini_client)   { instance_double(Ai::GeminiClient) }
-  let(:fake_unsplash_client) { instance_double(UnsplashClient) }
+  let(:fake_gemini) { instance_double("Ai::GeminiClient") }
+  let(:fake_unsplash) { instance_double("UnsplashClient") }
 
   subject(:suggester) do
     described_class.new(
       user: user,
       event_recipient: event_recipient,
-      gemini_client: fake_gemini_client,
-      unsplash_client: fake_unsplash_client
+      gemini_client: fake_gemini,
+      unsplash_client: fake_unsplash
     )
   end
 
-  before do
-    # we don't care about real images in these tests
-    allow(fake_unsplash_client).to receive(:search_image).and_return("https://example.com/image.jpg")
-  end
+  # -------------------------------------------------------------
+  # 1. Test compute_effective_budget_cents (all branches)
+  # -------------------------------------------------------------
+  describe "#call — budget logic" do
+    before { allow(fake_unsplash).to receive(:search_image).and_return(nil) }
 
-  context "when Gemini returns normal unique ideas" do
-    let(:idea_hashes) do
-      [
-        {
-          "title" => "Gardening Tool Set",
-          "description" => "A nice set of tools for her garden.",
-          "estimated_price" => "$30–$50",
-          "category" => "Gardening",
-          "special_notes" => "Choose ergonomic handles."
-        },
-        {
-          "title" => "Hardcover Novel",
-          "description" => "A best-selling book she might enjoy.",
-          "estimated_price" => "$15–$25",
-          "category" => "Books",
-          "special_notes" => "Pick a genre she likes."
-        }
-      ]
-    end
+    it "uses recipient.budget first" do
+      recipient.update!(budget: 50.0)
 
-    before do
-      allow(fake_gemini_client).to receive(:generate_gift_ideas).and_return(idea_hashes)
-    end
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "Gift", "description" => "d" }
+                                                                     ])
 
-    it "creates AiGiftSuggestion records for the returned ideas" do
-      expect {
-        suggester.call(round_type: "initial")
-      }.to change(AiGiftSuggestion, :count).by(2)
-
-      suggestion = AiGiftSuggestion.last
-      expect(suggestion.user).to eq(user)
-      expect(suggestion.event).to eq(event)
-      expect(suggestion.recipient).to eq(recipient)
-      expect(suggestion.event_recipient).to eq(event_recipient)
-      expect(suggestion.round_type).to eq("initial")
-      expect(suggestion.title).to eq("Hardcover Novel")
-      expect(suggestion.image_url).to eq("https://example.com/image.jpg")
-    end
-
-    it "passes a prompt string to the Gemini client" do
       suggester.call
-      expect(fake_gemini_client).to have_received(:generate_gift_ideas).with(a_kind_of(String))
+      expect(suggester.send(:compute_effective_budget_cents)).to eq(5000)
     end
 
-    it "uses Unsplash to fetch an image per idea" do
+    it "uses event_recipient.budget_allocated second" do
+      event_recipient.update!(budget_allocated: 30.0)
+
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "Gift", "description" => "d" }
+                                                                     ])
+
       suggester.call
-      expect(fake_unsplash_client).to have_received(:search_image).at_least(:once)
+      expect(suggester.send(:compute_effective_budget_cents)).to eq(3000)
+    end
+
+    it "uses event.budget divided by recipients when present" do
+      event.update!(budget: 100.0)
+
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "Gift", "description" => "d" }
+                                                                     ])
+
+      suggester.call
+      expect(suggester.send(:compute_effective_budget_cents)).to eq(10000)
+    end
+
+    it "returns nil when no budget exists" do
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([])
+
+      suggester.call
+      expect(suggester.send(:compute_effective_budget_cents)).to eq(nil)
     end
   end
 
-  context "when Gemini returns titles that already exist for this event_recipient" do
-    let(:idea_hashes) do
-      [
-        {
-          "title" => "Cozy Blanket",
-          "description" => "duplicate 1",
-          "estimated_price" => "$20–$40",
-          "category" => "Home",
-          "special_notes" => nil
-        },
-        {
-          "title" => "wireless MOUSE", # duplicate with different case
-          "description" => "duplicate 2",
-          "estimated_price" => "$40–$60",
-          "category" => "Tech",
-          "special_notes" => nil
-        },
-        {
-          "title" => "Personalized Mug",
-          "description" => "new idea",
-          "estimated_price" => "$10–$20",
-          "category" => "Personalized",
-          "special_notes" => "Add her name"
-        }
-      ]
+  # -------------------------------------------------------------
+  # 2. Test duplicate title rejection & blank skipping
+  # -------------------------------------------------------------
+  describe "#call — duplicate & blank title handling" do
+    before do
+      allow(fake_unsplash).to receive(:search_image).and_return("img.jpg")
     end
 
-    before do
-      # existing DB suggestions for this event_recipient
-      AiGiftSuggestion.create!(
-        user: user,
-        event: event,
-        recipient: recipient,
+    it "skips blank titles and removes duplicates" do
+      existing = AiGiftSuggestion.create!(
+        user: user, event: event, recipient: recipient,
         event_recipient: event_recipient,
-        round_type: "initial",
-        title: "Cozy Blanket"
+        title: "Existing", description: "d"
       )
 
-      AiGiftSuggestion.create!(
-        user: user,
-        event: event,
-        recipient: recipient,
-        event_recipient: event_recipient,
-        round_type: "initial",
-        title: "Wireless Mouse"
-      )
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "  ", "description" => "Blank" },
+                                                                       { "title" => "Existing", "description" => "dup" },
+                                                                       { "title" => "existing ", "description" => "dup2" }, # case-insensitive duplicate
+                                                                       { "title" => "Unique", "description" => "OK" }
+                                                                     ])
 
-      allow(fake_gemini_client).to receive(:generate_gift_ideas).and_return(idea_hashes)
+      results = suggester.call
+
+      expect(results.size).to eq(1)
+      expect(results.first.title).to eq("Unique")
     end
 
-    it "does not create new suggestions for titles that already exist (case-insensitive)" do
-      expect {
-        suggester.call(round_type: "regenerate")
-      }.to change(AiGiftSuggestion, :count).by(1) # only Personalized Mug is new
+    it "skips duplicates within the same batch" do
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "Mug", "description" => "1" },
+                                                                       { "title" => "mug ", "description" => "2" }, # duplicate
+                                                                       { "title" => "MUG", "description" => "3" }   # duplicate
+                                                                     ])
 
-      titles = AiGiftSuggestion.where(event_recipient: event_recipient).pluck(:title)
+      results = suggester.call
 
-      expect(titles).to include("Cozy Blanket", "Wireless Mouse", "Personalized Mug")
-      # ensure we didn't create extra copies of existing titles
-      expect(titles.count("Cozy Blanket")).to eq(1)
-      expect(titles.count("Wireless Mouse")).to eq(1)
+      expect(results.size).to eq(1)
+      expect(results.first.title).to eq("Mug")
     end
   end
 
-  context "when Gemini returns duplicate titles within the same batch" do
-    let(:idea_hashes) do
-      [
-        {
-          "title" => "Spa Day",
-          "description" => "first version",
-          "estimated_price" => "$80–$120",
-          "category" => "Experience",
-          "special_notes" => nil
-        },
-        {
-          "title" => "spa day", # same title with different case in same batch
-          "description" => "duplicate version",
-          "estimated_price" => "$80–$120",
-          "category" => "Experience",
-          "special_notes" => nil
-        },
-        {
-          "title" => "Board Game Night",
-          "description" => "Game night set",
-          "estimated_price" => "$30–$60",
-          "category" => "Games",
-          "special_notes" => nil
-        }
-      ]
+  # -------------------------------------------------------------
+  # 3. Test safe_fetch_image_url error handling
+  # -------------------------------------------------------------
+  describe "#safe_fetch_image_url" do
+    it "returns nil when UnsplashClient::Error is raised" do
+      allow(fake_unsplash).to receive(:search_image)
+                                .and_raise(UnsplashClient::Error.new("bad"))
+
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "Gift", "description" => "d" }
+                                                                     ])
+
+      result = suggester.call.first
+      expect(result.image_url).to eq(nil)
     end
 
-    before do
-      allow(fake_gemini_client).to receive(:generate_gift_ideas).and_return(idea_hashes)
-    end
+    it "returns nil when StandardError is raised" do
+      allow(fake_unsplash).to receive(:search_image)
+                                .and_raise(StandardError.new("boom"))
 
-    it "only creates unique suggestions from the batch (filters duplicates by title)" do
-      expect {
-        suggester.call(round_type: "initial")
-      }.to change(AiGiftSuggestion, :count).by(2)
+      allow(fake_gemini).to receive(:generate_gift_ideas).and_return([
+                                                                       { "title" => "Gift", "description" => "d" }
+                                                                     ])
 
-      titles = AiGiftSuggestion.where(event_recipient: event_recipient).pluck(:title)
-
-      # Only one Spa Day should exist (case-insensitive)
-      expect(titles.count { |t| t.downcase == "spa day" }).to eq(1)
-      expect(titles).to include("Board Game Night")
+      result = suggester.call.first
+      expect(result.image_url).to eq(nil)
     end
   end
 end

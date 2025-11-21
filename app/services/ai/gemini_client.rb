@@ -11,9 +11,22 @@ module Ai
     def initialize(api_key: nil, model: nil, api_endpoint: nil)
       creds = Rails.application.credentials
 
-      @api_key      = api_key      || creds.dig(:gemini, :api_key)
-      @model        = model        || creds.dig(:gemini, :model)        || "gemini-2.0-flash-lite-001"
-      @api_endpoint = api_endpoint || creds.dig(:gemini, :api_endpoint) || "https://generativelanguage.googleapis.com/v1beta"
+      @api_key =
+        api_key ||
+        ENV["GEMINI_API_KEY"] ||
+        creds.dig(:gemini, :api_key)
+
+      @model =
+        model ||
+        ENV["GEMINI_MODEL"] ||
+        creds.dig(:gemini, :model) ||
+        "gemini-2.0-flash-lite-001"
+
+      @api_endpoint =
+        api_endpoint ||
+        ENV["GEMINI_API_ENDPOINT"] ||
+        creds.dig(:gemini, :api_endpoint) ||
+        "https://generativelanguage.googleapis.com/v1beta"
 
       raise Error, "Gemini API key missing" if @api_key.blank?
     end

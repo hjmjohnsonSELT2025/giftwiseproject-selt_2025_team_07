@@ -125,7 +125,9 @@
 
     <div class="space-y-6">
       <% @recipients.each do |recipient| %>
-        <% suggestions = @suggestions_by_recipient[recipient.id] || [] %>
+        <% all_suggestions = @suggestions_by_recipient[recipient.id] || [] %>
+        <% regenerate_suggestions = all_suggestions.select { |s| s.round_type == "regenerate" } %>
+        <% suggestions = regenerate_suggestions.presence || all_suggestions %>
 
         <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-5">
           <div class="flex items-center justify-between mb-4">

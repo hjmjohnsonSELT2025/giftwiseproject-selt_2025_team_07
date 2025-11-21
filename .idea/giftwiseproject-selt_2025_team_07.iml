@@ -68,16 +68,25 @@
     <orderEntry type="library" scope="PROVIDED" name="debug (v1.11.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="diff-lcs (v1.6.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="docile (v1.4.1, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="dotenv (v3.1.8, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="dotenv-rails (v3.1.8, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="drb (v2.2.3, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="erb (v5.1.3, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="erubi (v1.13.1, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="factory_bot (v6.5.6, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="factory_bot_rails (v6.5.1, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="faraday (v2.14.0, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="faraday-net_http (v3.4.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="ffi (v1.17.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="globalid (v1.3.0, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="hashie (v5.0.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="i18n (v1.14.7, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="importmap-rails (v2.2.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="io-console (v0.8.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="irb (v1.15.3, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="jbuilder (v2.14.1, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="json (v2.16.0, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="jwt (v3.1.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="logger (v1.7.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="loofah (v2.24.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mail (v2.9.0, rbenv: 3.3.8) [gem]" level="application" />
@@ -90,13 +99,20 @@
     <orderEntry type="library" scope="PROVIDED" name="minitest (v5.26.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="msgpack (v1.8.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="multi_test (v1.1.0, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="multi_xml (v0.7.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mutex_m (v0.3.0, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="net-http (v0.8.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-imap (v0.5.12, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-pop (v0.1.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-protocol (v0.2.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-smtp (v0.5.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="nio4r (v2.7.5, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="nokogiri (v1.18.10, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="oauth2 (v2.0.18, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="omniauth (v2.1.4, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="omniauth-google-oauth2 (v1.2.1, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="omniauth-oauth2 (v1.8.0, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="omniauth-rails_csrf_protection (v1.0.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="pg (v1.6.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="pp (v0.6.3, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="prettyprint (v0.2.0, rbenv: 3.3.8) [gem]" level="application" />
@@ -105,6 +121,7 @@
     <orderEntry type="library" scope="PROVIDED" name="puma (v7.1.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="racc (v1.8.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack (v3.2.4, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="rack-protection (v4.2.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-session (v2.1.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rack-test (v2.2.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rackup (v2.2.1, rbenv: 3.3.8) [gem]" level="application" />
@@ -130,6 +147,7 @@
     <orderEntry type="library" scope="PROVIDED" name="simplecov (v0.22.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="simplecov-html (v0.13.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="simplecov_json_formatter (v0.1.4, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="snaky_hash (v2.0.3, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sprockets (v4.2.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sprockets-rails (v3.5.2, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sqlite3 (v2.8.0, rbenv: 3.3.8) [gem]" level="application" />
@@ -143,6 +161,8 @@
     <orderEntry type="library" scope="PROVIDED" name="tsort (v0.2.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="turbo-rails (v2.0.20, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="tzinfo (v2.0.6, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="uri (v1.1.1, rbenv: 3.3.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="version_gem (v1.1.9, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="web-console (v4.2.1, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="webdrivers (v5.2.0, rbenv: 3.3.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="webrick (v1.9.1, rbenv: 3.3.8) [gem]" level="application" />

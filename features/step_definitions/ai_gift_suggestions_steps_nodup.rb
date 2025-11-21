@@ -54,14 +54,19 @@ When("I go to the AI gift suggestions page for {string}") do |event_name|
   visit event_ai_gift_suggestions_path(event)
 end
 
-When("I click {string} for {string}") do |text, _recipient_name|
-  # click_on works for both <button> and <a> links with that text
-  click_on text
+When('I click "Regenerate ideas" for {string}') do |recipient_name|
+  # Find the recipient card by name, same style as other AI steps
+  card = all("div.bg-white.rounded-3xl.shadow-sm.border.border-gray-200").find do |node|
+    node.has_text?(recipient_name)
+  end
+
+  within(card) do
+    click_button "Regenerate ideas"
+  end
 end
 
+
 Then("I should see {int} AI gift ideas for {string}") do |count, _recipient_name|
-  # Each AI idea card on the event ideas page should have this class.
-  # If your view uses a different class, either change it there or adjust this selector.
   expect(page).to have_css(".ai-gift-card", count: count)
 end
 
@@ -75,11 +80,8 @@ When("I filter the AI library by event {string} and recipient {string} and saved
   user  = User.find_by!(email: "test@example.com")
   event = user.events.find_by!(event_name: event_name)
 
-  # Build the exact option label used in the view:
-  # "#{e.event_name} (#{e.event_date&.strftime('%b %d')})"
   event_label = "#{event.event_name} (#{event.event_date&.strftime('%b %d')})"
 
-  # Select boxes are identified by their field IDs (event_id, recipient_id)
   select(event_label, from: "event_id")
   select(recipient_name, from: "recipient_id")
 

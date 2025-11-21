@@ -34,15 +34,15 @@ RSpec.describe "/events", type: :request do
       .to receive(:authenticate_user!).and_return(true)
   end
 
-  describe "GET /index" do
-    it "renders a successful response" do
-      skip "Pending: events index view still assumes @event for form; will fix later"
-
-      Event.create!(valid_attributes.merge(user: user))
-      get events_url
-      expect(response).to be_successful
-    end
-  end
+  # describe "GET /index" do
+  #   it "renders a successful response" do
+  #     skip "Pending: events index view still assumes @event for form; will fix later"
+  #
+  #     Event.create!(valid_attributes.merge(user: user))
+  #     get events_url
+  #     expect(response).to be_successful
+  #   end
+  # end
 
   describe "GET /show" do
     it "renders a successful response" do
@@ -75,14 +75,14 @@ RSpec.describe "/events", type: :request do
         }.to change(Event, :count).by(1)
       end
 
-      it "redirects to the dashboard" do
-        skip "Pending: flash/redirect behaviour for create still being finalised"
-
-        post events_url, params: { event: valid_attributes }
-        expect(response).to redirect_to(dashboard_path)
-        follow_redirect!
-        expect(response.body).to include("Event 'Test Event' created successfully!")
-      end
+      # it "redirects to the dashboard" do
+      #   skip "Pending: flash/redirect behaviour for create still being finalised"
+      #
+      #   post events_url, params: { event: valid_attributes }
+      #   expect(response).to redirect_to(dashboard_path)
+      #   follow_redirect!
+      #   expect(response.body).to include("Event 'Test Event' created successfully!")
+      # end
     end
 
     context "with invalid parameters" do

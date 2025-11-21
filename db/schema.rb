@@ -51,7 +51,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
     t.string "uid"
     t.string "email"
     t.string "name"
-    t.string "avatar_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_authentications_on_user_id"
@@ -150,11 +149,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
 
   create_table "password_reset_tokens", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "token"
-    t.datetime "expires_at"
-    t.boolean "used"
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.boolean "used", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_password_reset_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_password_reset_tokens_on_user_id"
   end
 

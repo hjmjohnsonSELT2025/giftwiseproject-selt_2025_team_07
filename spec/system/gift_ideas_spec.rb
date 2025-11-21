@@ -5,7 +5,13 @@ RSpec.describe "Gift Ideas UI", type: :system do
     driven_by(:rack_test)
   end
 
-  let(:user) { create(:user, password: "Password@123") }
+  let(:user) do
+    create(
+      :user,
+      password: "Password@123",
+      password_confirmation: "Password@123"
+    )
+  end
 
   # Recipient that has an event → Gift Idea link should be enabled
   let!(:recipient_with_event) { create(:recipient, user: user) }

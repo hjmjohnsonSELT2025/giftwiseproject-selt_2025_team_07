@@ -1,7 +1,8 @@
 FactoryBot.define do
   factory :event_recipient do
     association :user
-    association :recipient
     association :event
+    association :recipient
+    budget_allocated { 0 }
   end
 end

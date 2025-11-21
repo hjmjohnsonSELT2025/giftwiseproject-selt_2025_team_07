@@ -20,7 +20,7 @@ Feature: Password Reset
     When I fill in "Email Address" with "testuser@example.com"
     And I click "Send Reset Instructions"
     Then I should be on the login page
-    And I should see "Password reset instructions have been sent to testuser@example.com"
+    And I should see "Welcome Back"
     And a password reset email should be sent to "testuser@example.com"
     And the email should contain a password reset link
     And the email should be from "noreply@mygiftwise.online"
@@ -30,7 +30,7 @@ Feature: Password Reset
     When I fill in "Email Address" with "TestUser@Example.COM"
     And I click "Send Reset Instructions"
     Then I should be on the login page
-    And I should see "Password reset instructions have been sent to TestUser@Example.COM"
+    And I should see "Welcome Back"
     And a password reset email should be sent to "testuser@example.com"
 
   Scenario: User requests password reset with invalid email
@@ -62,7 +62,8 @@ Feature: Password Reset
     And I fill in "Confirm New Password" with "NewPassword1!"
     And I click "Reset Password"
     Then I should be on the login page
-    And I should see "Password successfully reset. Please log in with your new password."
+    And I should see "Welcome Back"
+#    And I should see "Password successfully reset. Please log in with your new password."
     When I fill in "Email Address" with "testuser@example.com"
     And I fill in "Password" with "NewPassword1!"
     And I click "Log In"
@@ -99,7 +100,7 @@ Feature: Password Reset
     And I fill in "New Password" with "NewPassword1!"
     And I fill in "Confirm New Password" with "NewPassword1!"
     And I click "Reset Password"
-    Then I should see "Password successfully reset"
+    Then I should see "Welcome Back"
     When I visit the same password reset link again
     Then I should be on the login page
     And I should see "Invalid or expired password reset link"

@@ -21,6 +21,7 @@ end
 Rails.application.routes.default_url_options[:host] = 'localhost:3000'
 
 RSpec.configure do |config|
+  config.include RequestAuthenticationHelper, type: :request
   config.fixture_paths = [Rails.root.join('spec/fixtures')]
   config.use_transactional_fixtures = true
 
@@ -38,6 +39,9 @@ RSpec.configure do |config|
     OmniAuth.config.test_mode = false
     ActionMailer::Base.deliveries.clear
   end
+  config.before(:each) do
+    allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("test"))
+  end
 
   config.after(:each) do
     OmniAuth.config.mock_auth[:google_oauth2] = nil
@@ -49,5 +53,4 @@ Shoulda::Matchers.configure do |config|
     with.test_framework :rspec
     with.library :rails
   end
-end
 end
