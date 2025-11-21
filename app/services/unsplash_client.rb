@@ -11,8 +11,16 @@ class UnsplashClient
   def initialize(access_key: nil, api_base: nil)
     creds = Rails.application.credentials
 
-    @access_key = access_key || creds.dig(:unsplash, :access_key)
-    @api_base   = api_base   || creds.dig(:unsplash, :api_base) || "https://api.unsplash.com"
+    @access_key =
+      access_key ||
+      ENV["UNSPLASH_ACCESS_KEY"] ||
+      creds.dig(:unsplash, :access_key)
+
+    @api_base =
+      api_base ||
+      ENV["UNSPLASH_API_BASE"] ||
+      creds.dig(:unsplash, :api_base) ||
+      "https://api.unsplash.com"
 
     raise Error, "Unsplash access key missing" if @access_key.blank?
   end
