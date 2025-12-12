@@ -1,24 +1,86 @@
 <!-- app/views/friendships/create.turbo_stream.erb -->
-<%= turbo_stream.remove "user_#{@friendship.friend_id}" %>
 
+<!-- Step 1: Remove from available section -->
+<%= turbo_stream.remove "search_option_#{@friend.id}" %>
+
+<!-- Step 2: Prepend to pending section in search dropdown -->
+<%= turbo_stream.prepend "pending-sent-results" do %>
+  <%= render "friendships/search_result_pending", user: @friend %>
+<% end %>
+
+<!-- Step 3: Show pending section -->
+<turbo-stream action="remove" target="pending-sent-section-hidden">
+  <template></template>
+</turbo-stream>
+
+<!-- Step 4: Trigger visibility update via JavaScript -->
+<turbo-stream action="after" target="friend-search-dropdown">
+  <template>
+    <script>
+        (function() {
+            const pendingSection = document.getElementById('pending-sent-section');
+            const availableHeader = document.getElementById('available-users-header');
+
+            if (pendingSection) {
+                pendingSection.classList.remove('hidden');
+            }
+
+            if (availableHeader) {
+                availableHeader.classList.remove('hidden');
+            }
+        })();
+    </script>
+  </template>
+</turbo-stream>
+
+
+<%# 4) Show green flash message 'Friend request sent to X' %>
+<%= turbo_stream.prepend "flash-messages",
+                         partial: "shared/flash",
+                         locals: { type: "success",
+                                   message: "Friend request sent to #{@friend.name}" } %>
+
+<!-- Step 5: Show success flash message with animation -->
 <%= turbo_stream.prepend "flash-messages" do %>
-  <div class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 animate-fadeIn">
-    <div class="flex items-center gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      <span>Friend request sent to <%= @friendship.friend.name %></span>
+  <div class="fixed top-4 right-4 z-50 animate-slide-in-right" data-controller="auto-dismiss">
+    <div class="bg-white rounded-xl shadow-2xl border-l-4 border-green-500 p-4 max-w-md">
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0">
+          <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-semibold text-gray-900 mb-1">Request Sent!</h3>
+          <p class="text-sm text-gray-600">Friend request sent to <%= @friend.name %></p>
+        </div>
+        <button onclick="this.closest('[data-controller=auto-dismiss]').remove()" class="text-gray-400 hover:text-gray-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 <% end %>
 
-<script>
-    setTimeout(() => {
-        const flash = document.querySelector('.animate-fadeIn');
-        if (flash) {
-            flash.style.transition = 'opacity 0.5s ease-out';
-            flash.style.opacity = '0';
-            setTimeout(() => flash.remove(), 500);
+<style>
+    @keyframes slide-in-right {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
         }
-    }, 3000);
-</script>
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-in-right {
+        animation: slide-in-right 0.3s ease-out;
+    }
+</style>

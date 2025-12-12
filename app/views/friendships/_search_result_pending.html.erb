@@ -1,0 +1,26 @@
+<!-- app/views/friendships/_search_result_pending.html.erb -->
+
+<div
+  id="search_option_<%= user.id %>"
+  data-search-user
+  data-username="<%= user.name.to_s.downcase %>"
+  data-user-id="<%= user.id %>"
+  data-pending="true"
+  class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+>
+  <div class="flex items-center gap-3">
+    <div class="w-11 h-11 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0">
+      <span class="text-white font-semibold text-base">
+        <%= user.name.to_s.first&.upcase || "U" %>
+      </span>
+    </div>
+    <p class="text-base font-medium text-gray-900"><%= user.name %></p>
+  </div>
+
+  <!-- ORANGE PENDING BADGE -->
+  <span class="px-4 py-2 rounded-lg  bg-blue-600  text-white text-sm hover:bg-green-500 font-semibold transition-colors">
+    Pending
+  </span>
+
+
+</div>
