@@ -18,30 +18,47 @@ class AiGiftSuggestionsController < ApplicationController
   end
 
   def create
+    round_type = params[:round_type] || "initial"
+
+    # If AI is not enabled, use stub ideas in test/dev
+    if !ai_enabled? && (Rails.env.test? || Rails.env.development?)
+      ideas = generate_test_stub_ideas(@event_recipient, round_type)
+      flash[:notice] =
+        "Generated #{ideas.size} sample ideas for #{@event_recipient.recipient.name} (AI not configured)."
+      return redirect_to event_ai_gift_suggestions_path(@event, from: params[:from])
+    end
+
     suggester = Ai::GiftSuggester.new(
       user: current_user,          # <— creator is whoever clicks Generate
       event_recipient: @event_recipient
     )
 
-    round_type = params[:round_type] || "initial"
-    ideas = suggester.call(round_type: round_type)
+    fallback_used = false
 
-    # In test env we may stub ideas
-    if Rails.env.test? && ideas.blank?
+    begin
+      ideas = suggester.call(round_type: round_type)
+    rescue Ai::GeminiClient::Error
+      ideas = []
+    end
+
+    # Extra safety: if AI returns nothing, still create stub ideas
+    begin
+      ideas = suggester.call(round_type: round_type)
+    rescue Ai::GeminiClient::Error
+      ideas = []
+    end
+
+    if ideas.blank? && (Rails.env.test? || Rails.env.development?)
       ideas = generate_test_stub_ideas(@event_recipient, round_type)
+      fallback_used = true
     end
 
-    flash[:notice] = "Generated #{ideas.size} ideas for #{@event_recipient.recipient.name}."
-    redirect_to event_ai_gift_suggestions_path(@event, from: params[:from])
-  rescue Ai::GeminiClient::Error => e
-    Rails.logger.error("Gemini error: #{e.message}")
-
-    if Rails.env.test?
-      generate_test_stub_ideas(@event_recipient, params[:round_type] || "initial")
-      flash[:notice] = "Generated fallback AI ideas for #{@event_recipient.recipient.name}."
-    else
-      flash[:alert] = "Sorry, we couldn't generate ideas right now. Please try again later."
-    end
+    flash[:notice] =
+      if fallback_used
+        "Generated #{ideas.size} sample ideas for #{@event_recipient.recipient.name} (AI not configured)."
+      else
+        "Generated #{ideas.size} ideas for #{@event_recipient.recipient.name}."
+      end
 
     redirect_to event_ai_gift_suggestions_path(@event, from: params[:from])
   end
@@ -120,6 +137,12 @@ class AiGiftSuggestionsController < ApplicationController
   end
 
   private
+  def ai_enabled?
+    creds = Rails.application.credentials
+
+    ENV["GEMINI_API_KEY"].present? ||
+      creds.dig(:gemini, :api_key).present?
+  end
 
   # Used only in test / fallback mode
   def generate_test_stub_ideas(event_recipient, round_type)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
   create_table "ai_gift_suggestions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -34,7 +34,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   end
 
   create_table "audit_logs", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.string "resource_type"
     t.integer "resource_id"
     t.string "action"
@@ -42,6 +42,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.text "new_value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.text "details"
+    t.string "event_type", default: "resource_audit"
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["event_type"], name: "index_audit_logs_on_event_type"
+    t.index ["ip_address"], name: "index_audit_logs_on_ip_address"
+    t.index ["user_id", "action"], name: "index_audit_logs_on_user_id_and_action"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
@@ -56,26 +65,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.index ["user_id"], name: "index_authentications_on_user_id"
   end
 
-  create_table "cart_items", force: :cascade do |t|
-    t.integer "cart_id", null: false
-    t.integer "ai_gift_suggestion_id", null: false
-    t.integer "recipient_id", null: false
-    t.integer "event_id", null: false
-    t.integer "quantity", default: 1, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["ai_gift_suggestion_id"], name: "index_cart_items_on_ai_gift_suggestion_id"
-    t.index ["cart_id", "ai_gift_suggestion_id"], name: "index_cart_items_on_cart_id_and_ai_gift_suggestion_id", unique: true
-    t.index ["cart_id"], name: "index_cart_items_on_cart_id"
-    t.index ["event_id"], name: "index_cart_items_on_event_id"
-    t.index ["recipient_id"], name: "index_cart_items_on_recipient_id"
-  end
-
-  create_table "carts", force: :cascade do |t|
+  create_table "backup_codes", force: :cascade do |t|
     t.integer "user_id", null: false
+    t.string "code_digest", null: false
+    t.boolean "used", default: false, null: false
+    t.datetime "used_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["user_id"], name: "index_carts_on_user_id", unique: true
+    t.index ["user_id", "code_digest"], name: "index_backup_codes_on_user_id_and_code_digest", unique: true
+    t.index ["user_id"], name: "index_backup_codes_on_user_id"
   end
 
   create_table "collaboration_invites", force: :cascade do |t|
@@ -188,6 +186,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "mfa_credentials", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "secret_key", null: false
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_mfa_credentials_on_user_id", unique: true
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -277,7 +285,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.text "dislikes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "failed_login_attempts", default: 0, null: false
+    t.datetime "locked_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["failed_login_attempts"], name: "index_users_on_failed_login_attempts"
+    t.index ["locked_at"], name: "index_users_on_locked_at"
   end
 
   create_table "wishlists", force: :cascade do |t|
@@ -300,11 +312,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   add_foreign_key "ai_gift_suggestions", "users"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "authentications", "users"
-  add_foreign_key "cart_items", "ai_gift_suggestions"
-  add_foreign_key "cart_items", "carts"
-  add_foreign_key "cart_items", "events"
-  add_foreign_key "cart_items", "recipients"
-  add_foreign_key "carts", "users"
+  add_foreign_key "backup_codes", "users"
   add_foreign_key "collaboration_invites", "events"
   add_foreign_key "collaboration_invites", "users", column: "inviter_id"
   add_foreign_key "collaborators", "events"
@@ -319,6 +327,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   add_foreign_key "gift_given_backlogs", "recipients"
   add_foreign_key "gift_given_backlogs", "users"
   add_foreign_key "gift_ideas", "event_recipients"
+  add_foreign_key "mfa_credentials", "users"
   add_foreign_key "notifications", "events"
   add_foreign_key "notifications", "users"
   add_foreign_key "order_items", "ai_gift_suggestions"

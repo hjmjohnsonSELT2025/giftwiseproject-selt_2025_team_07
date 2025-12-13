@@ -61,12 +61,25 @@
             </div>
 
             <% has_suggestions = suggestions.any? %>
-            <%= button_to event_ai_gift_suggestions_path(@event,
-                                                         recipient_id: recipient.id,
-                                                         round_type: (has_suggestions ? "regenerate" : "initial"),
-                                                         from: params[:from]),
+            <%= button_to event_ai_gift_suggestions_path(
+                            @event,
+                            recipient_id: recipient.id,
+                            round_type: (has_suggestions ? "regenerate" : "initial"),
+                            from: params[:from]
+                          ),
                           method: :post,
-                          class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" do %>
+                          # attributes for the <form> wrapper
+                          form: {
+                            data: {
+                              controller: "gift-ideas",
+                              action: "submit->gift-ideas#submit turbo:submit-end->gift-ideas#reset"
+                            }
+                          },
+                          # attributes for the <button> element
+                          class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition",
+                          data: {
+                            gift_ideas_target: "button"
+                          } do %>
               <% if has_suggestions %>
                 <span class="mr-1">↻</span>
                 <span>Regenerate ideas</span>
@@ -106,30 +119,6 @@
                     </p>
 
                     <div class="flex items-center justify-between mt-auto">
-
-                      <!-- ADD TO CART BUTTON (NEW) -->
-                      <%= button_to cart_items_path(ai_gift_suggestion_id: idea.id),
-                                    method: :post,
-                                    class: "inline-flex items-center gap-1 text-xs text-gray-700 hover:text-[#a855f7]",
-                                    form: { data: { turbo: "false" } } do %>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                             class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"
-                             stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="9" cy="21" r="1"></circle>
-                          <circle cx="20" cy="21" r="1"></circle>
-                          <path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"></path>
-                        </svg>
-                        <span>Add to cart</span>
-                      <% end %>
-
-
-
-
-
-
-
-
-
                       <% saved_for_current_user = idea.saved_for_user?(@event.user) %>
 
                       <% if saved_for_current_user %>

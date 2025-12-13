@@ -58,7 +58,7 @@ RSpec.describe AiGiftSuggestionsController, type: :request do
            params: { recipient_id: recipient.id }
 
       expect(AiGiftSuggestion.count).to be > 0
-      expect(flash[:notice]).to include("fallback")
+      expect(flash[:notice]).to include("sample ideas")
     end
   end
 

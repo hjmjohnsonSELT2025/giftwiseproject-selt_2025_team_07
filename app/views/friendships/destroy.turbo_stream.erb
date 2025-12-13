@@ -1,0 +1,16 @@
+<!-- app/views/friendships/destroy.turbo_stream.erb -->
+
+<%= turbo_stream.remove "friend_#{@friend.id}" %>
+
+<%= turbo_stream.update "friends_count", "#{current_user.friends.count} friends" %>
+
+<%= turbo_stream.append "friend-search-dropdown" do %>
+  <%= render "friendships/search_result", user: @friend %>
+<% end %>
+
+<%= turbo_stream.prepend "flash-messages",
+                         partial: "shared/flash",
+                         locals: {
+                           type: "success",
+                           message: "Removed #{@friend.name} from friends"
+                         } %>
