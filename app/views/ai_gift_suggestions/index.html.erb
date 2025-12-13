@@ -61,12 +61,25 @@
             </div>
 
             <% has_suggestions = suggestions.any? %>
-            <%= button_to event_ai_gift_suggestions_path(@event,
-                                                         recipient_id: recipient.id,
-                                                         round_type: (has_suggestions ? "regenerate" : "initial"),
-                                                         from: params[:from]),
+            <%= button_to event_ai_gift_suggestions_path(
+                            @event,
+                            recipient_id: recipient.id,
+                            round_type: (has_suggestions ? "regenerate" : "initial"),
+                            from: params[:from]
+                          ),
                           method: :post,
-                          class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" do %>
+                          # attributes for the <form> wrapper
+                          form: {
+                            data: {
+                              controller: "gift-ideas",
+                              action: "submit->gift-ideas#submit turbo:submit-end->gift-ideas#reset"
+                            }
+                          },
+                          # attributes for the <button> element
+                          class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition",
+                          data: {
+                            gift_ideas_target: "button"
+                          } do %>
               <% if has_suggestions %>
                 <span class="mr-1">↻</span>
                 <span>Regenerate ideas</span>

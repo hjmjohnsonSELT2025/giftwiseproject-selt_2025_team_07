@@ -1,25 +1,69 @@
 <!-- app/views/friendships/_pending_request.html.erb -->
-<div id="pending_request_<%= friendship.id %>" class="flex items-center justify-between p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-  <div class="flex items-center gap-3">
-    <div class="w-12 h-12 rounded-full bg-[#f4e6ff] flex items-center justify-center">
-      <span class="text-[#a855f7] font-semibold text-lg"><%= friendship.user.name.first.upcase %></span>
-    </div>
-    <div>
-      <p class="font-medium text-gray-900"><%= friendship.user.name %></p>
-      <p class="text-sm text-gray-500"><%= friendship.user.email %></p>
+
+<div id="pending_request_<%= friendship.id %>" class="group bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200 hover:border-orange-300 p-5 transition-all duration-200 hover:shadow-lg">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-4 flex-1">
+      <!-- Avatar -->
+      <div class="relative">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 via-amber-400 to-yellow-400 flex items-center justify-center shadow-lg ring-4 ring-orange-100">
+          <!-- CHANGED text-white -> text-blue-600 -->
+          <span class="text-blue-600 font-bold text-2xl">
+            <%= friendship.user.name.first.upcase %>
+          </span>
+        </div>
+        <div class="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center animate-pulse">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- User Info -->
+      <div class="flex-1">
+        <div class="flex items-center gap-2">
+          <p class="font-bold text-gray-900 text-lg"><%= friendship.user.name %></p>
+          <!-- Orange "Pending" badge -->
+          <span class="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-semibold">
+            Pending
+          </span>
+        </div>
+
+        <p class="text-xs text-orange-700 mt-1 flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v6l4 2" />
+          </svg>
+          Sent <%= time_ago_in_words(friendship.created_at) %> ago
+        </p>
+      </div>
     </div>
   </div>
 
-  <div class="flex items-center gap-2">
-    <%= button_to "Accept",
-                  accept_friendship_path(friendship),
+  <!-- Action Buttons -->
+  <div class="flex items-center gap-3">
+    <%= button_to accept_friendship_path(friendship),
                   method: :patch,
-                  class: "px-6 py-2 rounded-full bg-[#a855f7] text-white font-medium hover:bg-[#9333ea] transition",
-                  data: { turbo_stream: true } %>
-    <%= button_to "Reject",
-                  reject_friendship_path(friendship),
+                  class: "flex-1 px-6 py-3 rounded-xl bg-green-400 from-green-500 to-emerald-500 text-white font-semibold hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2",
+                  data: { turbo_stream: true } do %>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+      <span>Accept</span>
+    <% end %>
+
+    <%= button_to reject_friendship_path(friendship),
                   method: :delete,
-                  class: "px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition",
-                  data: { turbo_stream: true, turbo_confirm: "Are you sure you want to reject this request?" } %>
+                  class: "flex-1 px-6 py-3 rounded-xl bg-red-500 from-red-500 to-pink-500 text-white font-semibold hover:from-red-600 hover:to-pink-600 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2",
+                  data: { turbo_stream: true,
+                          turbo_confirm: "Are you sure you want to reject this request from #{friendship.user.name}?" } do %>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+      <span>Reject</span>
+    <% end %>
   </div>
 </div>

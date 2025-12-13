@@ -28,6 +28,7 @@ RSpec.describe UnsplashClient do
         described_class.new(access_key: nil)
       }.to raise_error(UnsplashClient::Error, /missing/i)
     end
+
   end
 
   # ==========================================================

@@ -20,7 +20,7 @@ module Ai
         model ||
         ENV["GEMINI_MODEL"] ||
         creds.dig(:gemini, :model) ||
-        "gemini-2.0-flash-lite-001"
+        "gemini-2.5-flash"
 
       @api_endpoint =
         api_endpoint ||

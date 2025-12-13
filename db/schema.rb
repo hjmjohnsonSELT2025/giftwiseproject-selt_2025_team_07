@@ -34,7 +34,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   end
 
   create_table "audit_logs", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.string "resource_type"
     t.integer "resource_id"
     t.string "action"
@@ -42,6 +42,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.text "new_value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.text "details"
+    t.string "event_type", default: "resource_audit"
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["event_type"], name: "index_audit_logs_on_event_type"
+    t.index ["ip_address"], name: "index_audit_logs_on_ip_address"
+    t.index ["user_id", "action"], name: "index_audit_logs_on_user_id_and_action"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
@@ -188,6 +197,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "mfa_credentials", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "secret_key", null: false
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_mfa_credentials_on_user_id", unique: true
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -277,7 +296,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.text "dislikes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "failed_login_attempts", default: 0, null: false
+    t.datetime "locked_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["failed_login_attempts"], name: "index_users_on_failed_login_attempts"
+    t.index ["locked_at"], name: "index_users_on_locked_at"
   end
 
   create_table "wishlists", force: :cascade do |t|
@@ -319,6 +342,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   add_foreign_key "gift_given_backlogs", "recipients"
   add_foreign_key "gift_given_backlogs", "users"
   add_foreign_key "gift_ideas", "event_recipients"
+  add_foreign_key "mfa_credentials", "users"
   add_foreign_key "notifications", "events"
   add_foreign_key "notifications", "users"
   add_foreign_key "order_items", "ai_gift_suggestions"

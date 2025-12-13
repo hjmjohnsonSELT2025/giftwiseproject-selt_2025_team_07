@@ -34,7 +34,7 @@ class UnsplashClient
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = (uri.scheme == "https")
 
-    # 🔐 Dev-only workaround for SSL CRL issues on some local environments
+    # Dev-only workaround for SSL CRL issues on some local environments
     if Rails.env.development?
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
     end
