@@ -2,6 +2,10 @@ source "https://rubygems.org"
 
 ruby "3.3.8"
 
+gem 'rotp'
+gem 'rqrcode'
+
+
 # Core Rails
 gem "rails", "~> 7.1.6"
 
@@ -84,3 +88,8 @@ gem 'omniauth-google-oauth2'
 gem 'omniauth-rails_csrf_protection'
 
 gem 'dotenv-rails', groups: [:development, :test]
+
+gem 'rack-attack'           # Rate limiting
+
+gem 'brakeman'              # Security scanner
+gem 'bundler-audit'         # Check for vulnerable dependencies

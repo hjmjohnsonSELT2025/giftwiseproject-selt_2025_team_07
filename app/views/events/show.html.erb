@@ -95,11 +95,6 @@
       <%= back_label %>
     <% end %>
 
-    <% if alert.present? %>
-      <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-2xl mb-6">
-        <%= alert %>
-      </div>
-    <% end %>
 
     <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-200">
       <div class="flex items-start justify-between mb-6">
@@ -139,10 +134,20 @@
         </div>
 
         <div class="flex gap-2">
-          <% if @event.recipients.exists? %>
+          <% if @event.recipients.exists? && @event.can_manage_gifts?(current_user) %>
             <%= link_to "Get Ideas",
                         event_ai_gift_suggestions_path(@event, from: "event"),
                         class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+          <% elsif @event.recipients.exists? %>
+            <!-- Viewer: can see event but not trigger AI -->
+            <button
+              type="button"
+              class="px-4 py-2 rounded-full bg-gray-200 text-gray-400 text-sm font-medium cursor-not-allowed"
+              title="Only planners can generate AI gift ideas"
+              disabled
+            >
+              Get Ideas
+            </button>
           <% else %>
             <button
               type="button"
@@ -154,15 +159,17 @@
             </button>
           <% end %>
 
-          <%= link_to "Edit Event",
-                      edit_event_path(@event),
-                      class: "px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition" %>
+          <% if @event.can_manage_event?(current_user) %>
+            <%= link_to "Edit Event",
+                        edit_event_path(@event),
+                        class: "px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-medium transition" %>
 
-          <%= button_to event_path(@event),
-                        method: :delete,
-                        data: { confirm: "Are you sure you want to delete this event?" },
-                        class: "px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium transition" do %>
-            Delete
+            <%= button_to event_path(@event),
+                          method: :delete,
+                          data: { confirm: "Are you sure you want to delete this event?" },
+                          class: "px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium transition" do %>
+              Delete
+            <% end %>
           <% end %>
         </div>
 
@@ -174,6 +181,8 @@
           <p class="text-gray-600"><%= @event.description %></p>
         </div>
       <% end %>
+
+      <%= render "collaborators_section" %>
 
       <div class="mb-8">
         <h3 class="text-lg font-semibold mb-4">Current Recipients (<%= @event_recipients.count %>)</h3>
@@ -193,11 +202,13 @@
                   </div>
                 </div>
 
-                <%= button_to "Remove",
-                              remove_recipient_event_path(@event, event_recipient_id: event_recipient.id),
-                              method: :delete,
-                              data: { confirm: "Remove #{event_recipient.recipient.name} from this event?" },
-                              class: "px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium transition" %>
+                <% if @event.can_manage_event?(current_user) %>
+                  <%= button_to "Remove",
+                                remove_recipient_event_path(@event, event_recipient_id: event_recipient.id),
+                                method: :delete,
+                                data: { confirm: "Remove #{event_recipient.recipient.name} from this event?" },
+                                class: "px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium transition" %>
+                <% end %>
               </div>
             <% end %>
           </div>
@@ -229,10 +240,12 @@
                   <% end %>
                 </div>
 
-                <%= button_to "Add to Event",
-                              add_recipient_event_path(@event, recipient_id: recipient.id),
-                              method: :post,
-                              class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+                <% if @event.can_manage_event?(current_user) %>
+                  <%= button_to "Add to Event",
+                                add_recipient_event_path(@event, recipient_id: recipient.id),
+                                method: :post,
+                                class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+                <% end %>
               </div>
             <% end %>
           </div>

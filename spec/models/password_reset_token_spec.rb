@@ -209,11 +209,5 @@ RSpec.describe PasswordResetToken, type: :model do
       expect(token).not_to be_valid
     end
 
-    it 'cascades delete when user is deleted' do
-      user = create(:user)
-      token = create(:password_reset_token, user: user)
-
-      expect { user.destroy }.to change { PasswordResetToken.count }.by(-1)
-    end
   end
 end

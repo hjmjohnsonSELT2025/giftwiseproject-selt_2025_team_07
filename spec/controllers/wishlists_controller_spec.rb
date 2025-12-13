@@ -13,7 +13,7 @@ RSpec.describe WishlistsController, type: :controller do
       recipient: recipient,
       event_recipient: event_recipient,
       title: "Saved Gift",
-      saved_to_wishlist: true
+      round_type: "initial"
     )
   end
 
@@ -24,16 +24,22 @@ RSpec.describe WishlistsController, type: :controller do
       recipient: recipient,
       event_recipient: event_recipient,
       title: "Unsaved Gift",
-      saved_to_wishlist: false
+      round_type: "initial"
     )
   end
 
   before do
     allow(controller).to receive(:current_user).and_return(user)
+
+    Wishlist.create!(
+      user_id: user.id,
+      ai_gift_suggestion_id: saved_idea.id,
+      recipient_id: saved_idea.recipient_id
+    )
   end
 
   describe "GET #index" do
-    it "assigns only saved wishlist items for current_user" do
+    it "assigns only wishlist items for current_user" do
       get :index
 
       expect(response).to have_http_status(:ok)

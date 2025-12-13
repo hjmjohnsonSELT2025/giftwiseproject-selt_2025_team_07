@@ -120,8 +120,36 @@
     <!-- Filters card -->
     <!-- Filters card -->
     <section class="bg-white rounded-3xl border border-gray-200 px-6 py-4 md:px-8 md:py-5 mb-8 shadow-sm">
-      <%= form_with url: ai_gift_library_path, method: :get, local: true,
+      <%# Scope switch: Mine / Collab / All %>
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-xs text-gray-500">
+          <% current_scope = @scope.presence || "mine" %>
+          <% label =
+               case current_scope
+               when "collab" then "ideas from collaboration events"
+               when "all"    then "all ideas on events you can access"
+               else              "ideas you generated"
+               end %>
+          Showing <span class="font-semibold"><%= label %></span>.
+        </p>
+
+        <div class="inline-flex rounded-full bg-gray-100 p-1 text-xs font-medium">
+          <% base_params = request.query_parameters.except(:scope) %>
+
+          <% [["mine", "Mine"],
+              ["collab", "Collab"],
+              ["all", "All"]].each do |value, text| %>
+            <% active = (current_scope == value) %>
+            <%= link_to text,
+                        ai_gift_library_path(base_params.merge(scope: value)),
+                        class: "px-3 py-1 rounded-full transition #{active ? 'bg-white shadow-sm text-[#a855f7]' : 'text-gray-500 hover:text-gray-800'}" %>
+          <% end %>
+        </div>
+      </div>
+
+      <%= form_with url: ai_gift_library_path, method: :get, local: true, html: { id: "ai-library-filter-form" },
                     class: "grid gap-4 md:gap-5 md:grid-cols-3" do |f| %>
+        <%= hidden_field_tag :scope, current_scope %>
 
         <!-- Column 1: Event + Category -->
         <div class="rounded-2xl border border-gray-200 px-4 py-3 space-y-3">
@@ -143,10 +171,11 @@
             <label class="block text-xs font-semibold text-gray-500 mb-1">
               Category
             </label>
-            <% categories = AiGiftSuggestion.where(user: current_user)
-                                            .where.not(category: [nil, ""])
-                                            .distinct
-                                            .pluck(:category) %>
+            <% categories = AiGiftSuggestion
+              .where(event_id: @events.select(:id))
+              .where.not(category: [nil, ""])
+              .distinct
+              .pluck(:category) %>
             <%= f.select :category,
                          options_for_select(
                            [["All categories", ""]] + categories.map { |c| [c, c] },
@@ -324,15 +353,12 @@
                   Go to event
                 <% end %>
 
-                <%= button_to toggle_wishlist_event_ai_gift_suggestion_path(
-                                suggestion.event,
-                                suggestion,
-                                from: params[:from] || "ai_library"
-                              ),
+                <%= button_to toggle_wishlist_event_ai_gift_suggestion_path(suggestion.event, suggestion, from: "ai_library"),
                               method: :post,
+                              form: { data: { turbo: "false" } },
                               class: "inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 hover:bg-[#fee2e2] transition",
-                              title: (suggestion.saved_to_wishlist? ? "Remove from wishlist" : "Save to wishlist") do %>
-                  <% if suggestion.saved_to_wishlist? %>
+                              title: (suggestion.saved_for_user?(current_user) ? "Remove from wishlist" : "Save to wishlist") do %>
+                  <% if suggestion.saved_for_user?(current_user) %>
                     <span class="text-red-500 text-lg leading-none">♥</span>
                   <% else %>
                     <span class="text-gray-400 text-lg leading-none">♡</span>

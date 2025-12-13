@@ -1,0 +1,152 @@
+<!-- app/views/collaboration_requests/index.html.erb -->
+<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
+  <!-- Back link -->
+  <div class="max-w-6xl mx-auto px-6 pt-8">
+    <%= link_to dashboard_path, class: "inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition" do %>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      <span class="font-medium">Back to Dashboard</span>
+    <% end %>
+  </div>
+
+  <%# --- Load data right here so controller can stay simple --- %>
+  <% pending_collabs  = Collaborator.where(user_id: current_user.id, status: Collaborator::STATUS_PENDING).includes(:event, :user, event: :user) %>
+  <% accepted_collabs = Collaborator.where(user_id: current_user.id, status: Collaborator::STATUS_ACCEPTED).includes(:event, :user, event: :user) %>
+  <% all_collabs      = (pending_collabs + accepted_collabs).uniq.sort_by { |c| [c.event&.event_date || Date.new(3000,1,1), c.created_at] } %>
+
+  <main class="max-w-6xl mx-auto px-6 pt-6 pb-16">
+    <h1 class="text-4xl font-semibold mb-2">Collaboration Requests</h1>
+    <p class="text-gray-500 mb-8">
+      Manage invitations and see the events you’re helping plan.
+    </p>
+
+    <!-- Pending Requests -->
+    <section class="mb-10">
+      <div class="bg-white rounded-3xl p-6 border border-yellow-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 8v4M12 16h.01"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-semibold">Pending Invitations</h2>
+              <p class="text-sm text-gray-500">
+                <%= pending_collabs.any? ? pluralize(pending_collabs.size, "invitation") + " waiting for your response" : "No pending invitations right now." %>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <% if pending_collabs.any? %>
+          <div class="space-y-3">
+            <% pending_collabs.each do |collab| %>
+              <div class="flex items-center justify-between p-4 rounded-2xl border border-gray-200 bg-[#fffbeb]">
+                <div>
+                  <p class="text-sm text-gray-600">
+                    <span class="font-semibold"><%= collab.event.user.name %></span>
+                    invited you as
+                    <span class="font-semibold"><%= collab.role_label %></span>
+                  </p>
+                  <p class="text-lg font-semibold text-gray-900">
+                    <%= collab.event.event_name %>
+                  </p>
+                  <% if collab.event.event_date.present? %>
+                    <p class="text-xs text-gray-500 mt-1">
+                      <%= collab.event.event_date.strftime("%B %d, %Y") %>
+                    </p>
+                  <% end %>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <%= button_to "Accept",
+                                accept_collaboration_request_path(collab),
+                                method: :post,
+                                class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+
+                  <%= button_to "Reject",
+                                reject_collaboration_request_path(collab),
+                                method: :post,
+                                class: "px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 transition" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="rounded-2xl border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 text-center bg-gray-50">
+            No pending collaboration invitations. When someone invites you to help plan an event, it will show up here.
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+    <!-- Your collaboration events (accepted + pending) -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-xl font-semibold">Your Collaboration Events</h2>
+          <p class="text-sm text-gray-500">
+            Events where you’ve been invited as a co-planner or viewer.
+          </p>
+        </div>
+      </div>
+
+      <% if all_collabs.any? %>
+        <div class="bg-white rounded-3xl border border-gray-200 divide-y shadow-sm">
+          <% all_collabs.each do |collab| %>
+            <% event = collab.event %>
+            <div class="flex items-center justify-between px-6 py-4">
+              <div>
+                <p class="text-sm text-gray-500 mb-1">
+                  Host:
+                  <span class="font-medium text-gray-800"><%= event.user.name %></span>
+                </p>
+                <p class="text-lg font-semibold text-gray-900">
+                  <%= event.event_name %>
+                </p>
+                <p class="text-xs text-gray-500 mt-1">
+                  <% if event.event_date.present? %>
+                    <%= event.event_date.strftime("%b %d, %Y") %>
+                  <% else %>
+                    Date not set
+                  <% end %>
+                  • Role: <span class="font-medium"><%= collab.role_label %></span>
+                </p>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <%# Status pill %>
+                <% status_classes =
+                     case collab.status
+                     when Collaborator::STATUS_ACCEPTED then "bg-emerald-100 text-emerald-700"
+                     when Collaborator::STATUS_PENDING  then "bg-yellow-100 text-yellow-700"
+                     else "bg-gray-100 text-gray-600"
+                     end %>
+                <span class="px-3 py-1 rounded-full text-xs font-semibold <%= status_classes %>">
+                  <%= collab.status.humanize %>
+                </span>
+
+                <% if collab.status == Collaborator::STATUS_ACCEPTED %>
+                  <%= link_to "View event",
+                              event_path(event, from: "dashboard"),
+                              class: "text-xs font-medium text-[#a855f7] hover:text-[#9333ea] underline-offset-2 hover:underline" %>
+                <% else %>
+                  <span class="text-xs text-gray-400 italic">
+                    Waiting for your response above
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="bg-white rounded-3xl border border-dashed border-gray-300 px-6 py-8 text-center text-sm text-gray-500">
+          You’re not collaborating on any events yet. When you accept a collaboration invite, it will appear here.
+        </div>
+      <% end %>
+    </section>
+  </main>
+</div>

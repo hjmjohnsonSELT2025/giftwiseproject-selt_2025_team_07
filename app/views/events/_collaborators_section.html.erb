@@ -1,0 +1,211 @@
+<!-- app/views/events/_collaborators_section.html.erb -->
+
+<div
+  class="mb-8"
+  data-controller="collapsible"
+>
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <h3 class="text-lg font-semibold">Collaborators</h3>
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
+        <%= @event.collaborators.accepted.count + 1 %> total
+      </span>
+
+      <% pending_count = @event.collaborators.pending.count %>
+      <% if pending_count.positive? %>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">
+          <%= pending_count %> pending invite<%= "s" if pending_count > 1 %>
+        </span>
+      <% end %>
+    </div>
+
+    <button
+      type="button"
+      class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800"
+      data-action="click->collapsible#toggle"
+    >
+      <span data-collapsible-target="label">Hide details</span>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 24 24"
+           class="w-4 h-4 transition-transform"
+           data-collapsible-target="icon">
+        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Everything below is collapsible -->
+  <div data-collapsible-target="content">
+    <!-- Owner row -->
+    <div class="flex items-center justify-between p-4 mb-3 border border-gray-200 rounded-2xl bg-gray-50">
+      <div>
+        <p class="font-medium"><%= @event.user.name %></p>
+        <p class="text-xs text-gray-500"><%= @event.user.email %></p>
+      </div>
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">
+        Owner
+      </span>
+    </div>
+
+    <!-- Accepted collaborators -->
+    <% accepted = @event.collaborators.accepted.includes(:user) %>
+    <% if accepted.any? %>
+      <div class="space-y-3 mb-4">
+        <% accepted.each do |collab| %>
+          <div class="flex items-center justify-between p-4 border border-gray-200 rounded-2xl bg-white">
+            <div>
+              <p class="font-medium"><%= collab.user.name %></p>
+              <p class="text-xs text-gray-500"><%= collab.user.email %></p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <% role_label = collab.role_label %>
+
+              <span class="px-3 py-1 rounded-full text-xs font-semibold
+                           <%= collab.role == Collaborator::ROLE_CO_PLANNER ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700' %>">
+                <%= role_label %>
+              </span>
+
+              <% if @event.can_manage_event?(current_user) && !@event.owner?(collab.user) %>
+                <!-- Role change dropdown -->
+                <%= form_with url: event_collaborator_path(@event, collab),
+                              method: :patch,
+                              local: true,
+                              class: "flex items-center gap-2" do |f| %>
+                  <%= f.select :role,
+                               [["Co-Planner", Collaborator::ROLE_CO_PLANNER],
+                                ["Viewer", Collaborator::ROLE_VIEWER]],
+                               { selected: collab.role },
+                               class: "text-xs border-gray-300 rounded-full px-2 py-1 bg-white" %>
+                  <%= f.submit "Update",
+                               class: "text-xs px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium" %>
+                <% end %>
+
+                <!-- Remove collaborator -->
+                <%= button_to "Remove",
+                              event_collaborator_path(@event, collab),
+                              method: :delete,
+                              data: { turbo_confirm: "Remove this collaborator from the event?" },
+                              class: "text-xs px-3 py-1 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-medium" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Pending invitations -->
+    <% pending = @event.collaborators.pending.includes(:user) %>
+    <% if pending.any? %>
+      <div class="mb-4 p-4 border border-dashed border-yellow-300 rounded-2xl bg-yellow-50 text-xs">
+        <p class="font-semibold text-yellow-800 mb-1">Pending invitations</p>
+        <ul class="space-y-1 text-yellow-900">
+          <% pending.each do |collab| %>
+            <li>
+              <%= collab.user&.email %>
+              – awaiting acceptance
+              (<%= collab.role_label %>)
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if @event.can_manage_event?(current_user) %>
+      <!-- Invite collaborator by email -->
+      <div class="p-4 border border-dashed border-gray-300 rounded-2xl bg-gray-50 mb-4">
+        <h4 class="text-sm font-semibold mb-3">Invite a collaborator</h4>
+
+        <%= form_with url: event_collaborators_path(@event), scope: :collaborator, method: :post, local: true do |f| %>
+          <div class="flex flex-col gap-3">
+
+            <!-- Row 1: Email OR Friend -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <!-- Invite by email -->
+              <div>
+                <%= f.label :email, "Invite by email", class: "block text-xs font-medium text-gray-700 mb-1" %>
+                <%= f.email_field :email,
+                                  placeholder: "friend@example.com",
+                                  class: "w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white" %>
+                <p class="mt-1 text-[11px] text-gray-400">
+                  You can invite anyone by email (must already have a GiftWise account for now).
+                </p>
+              </div>
+
+              <!-- Invite from Friends -->
+              <% existing_ids = [@event.user_id] + @event.collaborators.where.not(user_id: nil).pluck(:user_id) %>
+              <% friend_candidates = current_user.friends.where.not(id: existing_ids).order(:name) %>
+
+              <div>
+                <%= f.label :user_id, "Or pick from friends", class: "block text-xs font-medium text-gray-700 mb-1" %>
+
+                <%= f.select :user_id,
+                             options_for_select(
+                               [["Select a friend…", ""]] +
+                               friend_candidates.map { |friend| ["#{friend.name} (#{friend.email})", friend.id] }
+                             ),
+                             {},
+                             class: "w-full px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" %>
+
+                <p class="mt-1 text-[11px] text-gray-400">
+                  Friends already added as collaborators won’t show here.
+                </p>
+              </div>
+            </div>
+
+            <!-- Row 2: Role + Submit -->
+            <div class="flex flex-col md:flex-row md:items-end gap-3">
+              <div>
+                <%= f.label :role, "Role", class: "block text-xs font-medium text-gray-700 mb-1" %>
+                <%= f.select :role,
+                             [["Co-Planner", Collaborator::ROLE_CO_PLANNER],
+                              ["Viewer",     Collaborator::ROLE_VIEWER]],
+                             {},
+                             class: "px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" %>
+              </div>
+
+              <div class="md:ml-auto">
+                <%= f.submit "Invite",
+                             class: "w-full md:w-auto px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <p class="mt-2 text-xs text-gray-400">
+          For now, collaborators must already be GiftWise users. Later we can send invite emails for non-users.
+        </p>
+
+        <p class="mt-2 text-xs text-gray-400">
+          For now, any existing user can be invited by email. You can also add collaborators from your friends list below.
+        </p>
+      </div>
+
+      <!-- Quick add from friends -->
+      <% if current_user.respond_to?(:friends) %>
+        <% existing_ids = [@event.user_id] + @event.collaborators.pluck(:user_id) %>
+        <% friend_candidates = current_user.friends.where.not(id: existing_ids).order(:name) %>
+
+        <% if friend_candidates.any? %>
+          <div class="mb-4">
+            <p class="text-xs font-semibold text-gray-700 mb-2">
+              Quick add from your friends
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <% friend_candidates.each do |friend| %>
+                <%= button_to "#{friend.name}",
+                              event_collaborators_path(
+                                @event,
+                                email: friend.email,
+                                role:  Collaborator::ROLE_CO_PLANNER
+                              ),
+                              method: :post,
+                              class: "px-3 py-1 rounded-full text-xs bg-gray-100 hover:bg-gray-200 text-gray-700" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

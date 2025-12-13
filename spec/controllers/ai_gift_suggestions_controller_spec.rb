@@ -56,35 +56,45 @@ RSpec.describe AiGiftSuggestionsController, type: :controller do
   end
 
   describe "POST #toggle_wishlist" do
-    let!(:idea) do
+    let(:user) { create(:user) }
+    let(:event) { create(:event, user: user) }
+    let(:recipient) { create(:recipient, user: user) }
+    let(:event_recipient) { create(:event_recipient, user: user, event: event, recipient: recipient) }
+
+    let(:idea) do
       AiGiftSuggestion.create!(
         user: user,
         event: event,
         recipient: recipient,
         event_recipient: event_recipient,
-        title: "Toggle Gift",
-        saved_to_wishlist: false
+        round_type: "initial",
+        title: "Test Idea"
       )
     end
 
-    it "toggles saved_to_wishlist from false to true" do
-      post :toggle_wishlist, params: { event_id: event.id, id: idea.id }
-
-      idea.reload
-      expect(idea.saved_to_wishlist).to be true
-      expect(response).to redirect_to(event_ai_gift_suggestions_path(event))
-      expect(flash[:notice]).to match(/Added/)
+    before do
+      allow(controller).to receive(:authenticate_user!).and_return(true)
+      allow(controller).to receive(:current_user).and_return(user)
+      allow(Event).to receive_message_chain(:accessible_to, :find).and_return(event)
+      allow(event).to receive(:can_manage_gifts?).and_return(true)
     end
 
-    it "toggles saved_to_wishlist from true to false" do
-      idea.update!(saved_to_wishlist: true)
+    it "adds a wishlist row for current_user when not saved" do
+      expect {
+        post :toggle_wishlist, params: { event_id: event.id, id: idea.id }
+      }.to change { Wishlist.where(user_id: user.id, ai_gift_suggestion_id: idea.id).count }.from(0).to(1)
+    end
 
-      post :toggle_wishlist, params: { event_id: event.id, id: idea.id }
+    it "removes a wishlist row for current_user when already saved" do
+      Wishlist.create!(
+        user_id: user.id,
+        ai_gift_suggestion_id: idea.id,
+        recipient_id: idea.recipient_id
+      )
 
-      idea.reload
-      expect(idea.saved_to_wishlist).to be false
-      expect(response).to redirect_to(event_ai_gift_suggestions_path(event))
-      expect(flash[:notice]).to match(/Removed/)
+      expect {
+        post :toggle_wishlist, params: { event_id: event.id, id: idea.id }
+      }.to change { Wishlist.where(user_id: user.id, ai_gift_suggestion_id: idea.id).count }.from(1).to(0)
     end
   end
 end

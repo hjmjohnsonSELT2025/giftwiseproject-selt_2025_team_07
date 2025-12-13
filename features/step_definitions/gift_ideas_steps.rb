@@ -1,3 +1,4 @@
+#features/step_definitions/gift_ideas_steps.rb
 Given("a recipient with an event exists") do
   # User for these scenarios
   @user = User.create!(

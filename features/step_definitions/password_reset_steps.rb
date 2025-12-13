@@ -1,3 +1,4 @@
+#features/step_definitions/password_reset_steps.rb
 Given('the following user exists:') do |table|
   table.hashes.each do |row|
     User.create!(

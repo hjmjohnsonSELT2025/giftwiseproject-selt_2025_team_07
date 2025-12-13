@@ -9,14 +9,14 @@ Rails.application.routes.draw do
   delete "logout", to: "sessions#destroy"
   get    "logout", to: "sessions#destroy"
 
-  get 'auth/:provider/callback', to: 'sessions#omniauth'
-  post 'auth/:provider/callback', to: 'sessions#omniauth'
-  get 'auth/failure', to: 'sessions#auth_failure'
+  get  "auth/:provider/callback", to: "sessions#omniauth"
+  post "auth/:provider/callback", to: "sessions#omniauth"
+  get  "auth/failure", to: "sessions#auth_failure"
 
-  get 'forgot_password', to: 'password_resets#new'
-  post 'forgot_password', to: 'password_resets#create'
-  get 'reset_password/:token', to: 'password_resets#edit', as: :reset_password
-  patch 'reset_password/:token', to: 'password_resets#update'
+  get  "forgot_password", to: "password_resets#new"
+  post "forgot_password", to: "password_resets#create"
+  get  "reset_password/:token", to: "password_resets#edit", as: :reset_password
+  patch "reset_password/:token", to: "password_resets#update"
 
   get "dashboard", to: "dashboard#index"
 
@@ -27,7 +27,6 @@ Rails.application.routes.draw do
   post "chatbot/message", to: "chatbots#message"
 
   resource :profile, only: [:edit, :update]
-
   resource :password, only: [:edit, :update]
 
   get "/passwords/edit",   to: "passwords#edit"
@@ -38,12 +37,25 @@ Rails.application.routes.draw do
     resources :gift_given_backlogs, only: [:new, :create, :destroy]
   end
 
+  resource :mfa, only: [], controller: "mfa" do
+    get :setup
+    post :enable
+    delete :disable
+  end
+
+  resource :mfa_session, only: [:new, :create] do
+    post :verify_backup_code
+  end
+
   resources :events do
     resources :ai_gift_suggestions, only: [:index, :create] do
       member do
         post :toggle_wishlist
       end
     end
+
+    # collaborations
+    resources :collaborators, only: [:create, :update, :destroy]
 
     member do
       post :add_recipient
@@ -57,25 +69,29 @@ Rails.application.routes.draw do
   # DIRECT MESSAGING ROUTES
   # ========================================
 
-  # Friendships routes
   resources :friendships, only: [:index, :create, :destroy] do
     member do
       patch :accept
       delete :reject
     end
   end
-  # Messages routes
+
   resources :messages, only: [:index, :create] do
     collection do
       get :conversations
-      delete :clear, to: 'messages#clear', as: 'clear'  # Clear chat action
+      delete :clear, to: "messages#clear", as: "clear"
     end
   end
-  # ActionCable mount for real-time messaging
-  mount ActionCable.server => '/cable'
 
+  # collaborations requests inbox
+  resources :collaboration_requests, only: [:index] do
+    member do
+      post :accept
+      delete :reject
+    end
+  end
 
-
+  mount ActionCable.server => "/cable"
 
   get "up" => "rails/health#show", as: :rails_health_check
 end
