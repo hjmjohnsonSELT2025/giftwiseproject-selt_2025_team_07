@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-[#f5f5fb] py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md mx-auto bg-white rounded-3xl shadow-lg p-8">
+    <div class="mb-6">
+      <%= link_to edit_profile_path, data: { turbo: false }, class: "inline-flex items-center gap-2 text-gray-600 hover:text-gray-900" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Profile</span>
+      <% end %>
+    </div>
+
+    <h2 class="text-2xl font-bold text-gray-900 mb-2 text-center">Set Up Two-Factor Authentication</h2>
+    <p class="text-sm text-gray-600 mb-8 text-center">Add an extra layer of security to your account</p>
+
+    <div class="space-y-6">
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Step 1: Scan QR Code</h3>
+        <p class="text-sm text-gray-600 mb-4">
+          Use Google Authenticator, Authy, or any TOTP-compatible app to scan this QR code.
+        </p>
+
+        <div class="flex justify-center mb-4 bg-white p-4 rounded-lg border border-gray-200">
+          <%= raw RQRCode::QRCode.new(@provisioning_uri).as_svg(module_size: 4) %>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Or Enter Manually</h3>
+        <p class="text-sm text-gray-600 mb-2">If you can't scan the QR code, enter this key manually:</p>
+        <div class="bg-gray-100 p-3 rounded-lg font-mono text-sm break-all text-center">
+          <%= @secret_key %>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Step 2: Verify Code</h3>
+        <p class="text-sm text-gray-600 mb-4">
+          Enter the 6-digit code from your authenticator app to complete setup.
+        </p>
+
+        <%= form_with url: enable_mfa_path, method: :post, data: { turbo: false } do |f| %>
+          <div class="mb-4">
+            <%= f.label :code, "Authentication Code", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= f.text_field :code,
+                             placeholder: "000000",
+                             maxlength: 6,
+                             class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent text-center text-lg tracking-widest",
+                             autofocus: true %>
+          </div>
+
+          <div class="flex gap-3">
+            <%= f.submit "Enable MFA",
+                         class: "flex-1 bg-[#a855f7] text-white py-3 px-4 rounded-lg hover:bg-[#9333ea] focus:outline-none focus:ring-2 focus:ring-[#a855f7] font-semibold transition cursor-pointer" %>
+            <%= link_to "Cancel",
+                        edit_profile_path,
+                        data: { turbo: false },
+                        class: "flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-300 text-center font-semibold transition" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

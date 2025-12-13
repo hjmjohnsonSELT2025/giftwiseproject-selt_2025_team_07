@@ -15,6 +15,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def require_login
+    authenticate_user!
+  end
+
   def after_sign_in_path_for(_resource)
     dashboard_path
   end

@@ -23,6 +23,15 @@ Given('a user exists with email {string} and password {string} and name {string}
   )
 end
 
+Given('I am a registered user with email {string} and password {string}') do |email, password|
+  @user = User.create!(
+    name: 'Test User',
+    email: email,
+    password: password,
+    password_confirmation: password
+  )
+end
+
 Given('I am logged in as {string}') do |email|
   User.find_or_create_by!(email: email) do |u|
     u.name = "Test User"
@@ -61,6 +70,21 @@ When('I visit the home page') do
   visit root_path
 end
 
+When('I logout') do
+  visit logout_path
+end
+
+When('I login with email {string} and password {string}') do |email, password|
+  visit login_path
+  fill_in 'Email Address', with: email
+  fill_in 'Password', with: password
+  click_button 'Log In'
+end
+
+When('I visit the profile edit page') do
+  visit edit_profile_path
+end
+
 Then('I should be on the dashboard page') do
   expect(current_path).to eq(dashboard_path)
 end
@@ -83,6 +107,14 @@ end
 
 Then('I should be redirected to the dashboard') do
   expect(current_path).to eq(dashboard_path)
+end
+
+Then('I should be redirected to the profile edit page') do
+  expect(page).to have_current_path(edit_profile_path)
+end
+
+Then('I should be redirected to the MFA setup page') do
+  expect(page).to have_current_path(setup_mfa_path)
 end
 
 Given('I am on the dashboard page') do
@@ -143,13 +175,13 @@ Given('I am logged in as Google user {string}') do |email|
   user = User.find_by(email: email)
   OmniAuth.config.test_mode = true
   OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new({
-     provider: 'google_oauth2',
-     uid: user.authentications.first.uid,
-     info: {
-       email: email,
-       name: user.name
-     }
-   })
+                                                                       provider: 'google_oauth2',
+                                                                       uid: user.authentications.first.uid,
+                                                                       info: {
+                                                                         email: email,
+                                                                         name: user.name
+                                                                       }
+                                                                     })
 
   visit '/auth/google_oauth2/callback'
 end
@@ -172,6 +204,7 @@ Given('the user {string} has linked their Google account') do |email|
     name: user.name
   )
 end
+
 Given("I am on the signup page") do
   visit signup_path
 end

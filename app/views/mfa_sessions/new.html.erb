@@ -1,0 +1,73 @@
+<div class="min-h-screen bg-[#f5f5fb] flex items-center justify-center px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full bg-white rounded-3xl shadow-lg p-8">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-[#f4e6ff] flex items-center justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-[#a855f7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect>
+          <circle cx="12" cy="16" r="1"></circle>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">Two-Factor Authentication</h2>
+      <p class="text-sm text-gray-600">Enter the code from your authenticator app</p>
+    </div>
+
+    <%= form_with url: mfa_session_path, method: :post, data: { turbo: false }, class: "space-y-6" do |f| %>
+      <div>
+        <%= f.label :code, "Authentication Code", class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= f.text_field :code,
+                         placeholder: "000000",
+                         maxlength: 6,
+                         required: true,
+                         autofocus: true,
+                         class: "w-full px-4 py-3 text-center text-lg tracking-widest border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition" %>
+      </div>
+
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white text-gray-500">Or use backup code</span>
+        </div>
+      </div>
+
+      <div id="backup-code-section">
+        <%= link_to "Use Backup Code", "#",
+                    onclick: "document.getElementById('backup-code-section').style.display='none'; document.getElementById('backup-code-form').style.display='block'; return false;",
+                    class: "block text-center text-sm text-[#a855f7] hover:text-[#9333ea] font-medium" %>
+      </div>
+
+      <div class="flex gap-3">
+        <%= f.submit "Verify Code",
+                     class: "flex-1 bg-[#a855f7] text-white py-3 px-4 rounded-lg hover:bg-[#9333ea] focus:outline-none focus:ring-2 focus:ring-[#a855f7] font-semibold transition cursor-pointer" %>
+        <%= link_to "Cancel",
+                    login_path,
+                    data: { turbo: false },
+                    class: "flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-300 text-center font-semibold transition" %>
+      </div>
+    <% end %>
+
+    <div id="backup-code-form" style="display: none;" class="mt-6">
+      <%= form_with url: verify_backup_code_mfa_session_path, method: :post, data: { turbo: false }, class: "space-y-4" do |f| %>
+        <div>
+          <%= f.label :backup_code, "Backup Code", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= f.text_field :backup_code,
+                           placeholder: "XXXXXXXX",
+                           maxlength: 8,
+                           required: true,
+                           class: "w-full px-4 py-3 text-center text-lg tracking-widest border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:border-transparent transition" %>
+        </div>
+
+        <div class="flex gap-3">
+          <%= f.submit "Verify Backup Code",
+                       class: "flex-1 bg-[#a855f7] text-white py-3 px-4 rounded-lg hover:bg-[#9333ea] focus:outline-none focus:ring-2 focus:ring-[#a855f7] font-semibold transition cursor-pointer" %>
+          <%= link_to "Back",
+                      "#",
+                      onclick: "document.getElementById('backup-code-form').style.display='none'; document.getElementById('backup-code-section').style.display='block'; return false;",
+                      class: "flex-1 bg-gray-200 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-300 text-center font-semibold transition" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

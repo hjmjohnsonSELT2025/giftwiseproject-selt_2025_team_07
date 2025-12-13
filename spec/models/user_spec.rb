@@ -5,6 +5,8 @@ RSpec.describe User, type: :model do
     it { should have_many(:recipients).dependent(:destroy) }
     it { should have_many(:events).dependent(:destroy) }
     it { should have_many(:authentications).dependent(:destroy) }
+    it { should have_one(:mfa_credential).dependent(:destroy) }
+    it { should have_many(:backup_codes).dependent(:destroy) }
   end
 
   describe 'validations' do
@@ -418,6 +420,89 @@ RSpec.describe User, type: :model do
     it 'persists the token to database' do
       token = user.generate_password_reset_token!
       expect(PasswordResetToken.find(token.id)).to be_present
+    end
+  end
+
+  describe '#mfa_enabled?' do
+    let(:user) { User.create!(name: 'Test User', email: 'test@example.com', password: 'Password123!', password_confirmation: 'Password123!') }
+
+    context 'when MFA is not set up' do
+      it 'returns false' do
+        expect(user.mfa_enabled?).to be false
+      end
+    end
+
+    context 'when MFA credential exists but not enabled' do
+      before do
+        user.create_mfa_credential!(secret_key: ROTP::Base32.random, enabled: false)
+      end
+
+      it 'returns false' do
+        expect(user.mfa_enabled?).to be false
+      end
+    end
+
+    context 'when MFA credential exists and is enabled' do
+      before do
+        user.create_mfa_credential!(secret_key: ROTP::Base32.random, enabled: true)
+      end
+
+      it 'returns true' do
+        expect(user.mfa_enabled?).to be true
+      end
+    end
+  end
+
+  describe '#verify_mfa_code' do
+    let(:user) { User.create!(name: 'Test User', email: 'test@example.com', password: 'Password123!', password_confirmation: 'Password123!') }
+    let(:secret) { ROTP::Base32.random }
+
+    context 'when MFA is enabled' do
+      before do
+        user.create_mfa_credential!(secret_key: secret, enabled: true)
+      end
+
+      it 'verifies valid code' do
+        totp = ROTP::TOTP.new(secret)
+        code = totp.now
+        expect(user.verify_mfa_code(code)).to be true
+      end
+
+      it 'rejects invalid code' do
+        expect(user.verify_mfa_code('000000')).to be false
+      end
+    end
+
+    context 'when MFA is not enabled' do
+      it 'returns false' do
+        expect(user.verify_mfa_code('123456')).to be false
+      end
+    end
+  end
+
+  describe '#verify_backup_code' do
+    let(:user) { User.create!(name: 'Test User', email: 'test@example.com', password: 'Password123!', password_confirmation: 'Password123!') }
+    let(:codes) { BackupCode.generate_codes_for_user(user) }
+
+    it 'verifies valid unused backup code' do
+      expect(user.verify_backup_code(codes.first)).to be true
+    end
+
+
+
+    it 'rejects invalid backup code' do
+      expect(user.verify_backup_code('INVALID1')).to be false
+    end
+
+    it 'rejects already used backup code' do
+      user.verify_backup_code(codes.first)
+      expect(user.verify_backup_code(codes.first)).to be false
+    end
+
+    it 'can verify multiple different codes' do
+      expect(user.verify_backup_code(codes[0])).to be true
+      expect(user.verify_backup_code(codes[1])).to be true
+      expect(user.verify_backup_code(codes[2])).to be true
     end
   end
 end

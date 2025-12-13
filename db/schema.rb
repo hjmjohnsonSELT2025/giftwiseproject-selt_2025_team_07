@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_12_004740) do
   create_table "ai_gift_suggestions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -51,11 +51,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
     t.string "uid"
     t.string "email"
     t.string "name"
+    t.string "avatar_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_authentications_on_user_id"
   end
 
+  create_table "backup_codes", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "code_digest", null: false
+    t.boolean "used", default: false, null: false
+    t.datetime "used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "code_digest"], name: "index_backup_codes_on_user_id_and_code_digest", unique: true
+    t.index ["user_id"], name: "index_backup_codes_on_user_id"
   create_table "collaboration_invites", force: :cascade do |t|
     t.integer "event_id", null: false
     t.integer "inviter_id", null: false
@@ -166,6 +176,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "mfa_credentials", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "secret_key", null: false
+    t.boolean "enabled", default: false, null: false
+    t.datetime "enabled_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_mfa_credentials_on_user_id", unique: true
+  end
+
   create_table "notifications", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -180,12 +200,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
 
   create_table "password_reset_tokens", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "token", null: false
-    t.datetime "expires_at", null: false
-    t.boolean "used", default: false, null: false
+    t.string "token"
+    t.datetime "expires_at"
+    t.boolean "used"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["token"], name: "index_password_reset_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_password_reset_tokens_on_user_id"
   end
 
@@ -244,6 +263,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
   add_foreign_key "ai_gift_suggestions", "users"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "authentications", "users"
+  add_foreign_key "backup_codes", "users"
   add_foreign_key "collaboration_invites", "events"
   add_foreign_key "collaboration_invites", "users", column: "inviter_id"
   add_foreign_key "collaborators", "events"
@@ -258,6 +278,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
   add_foreign_key "gift_given_backlogs", "recipients"
   add_foreign_key "gift_given_backlogs", "users"
   add_foreign_key "gift_ideas", "event_recipients"
+  add_foreign_key "mfa_credentials", "users"
   add_foreign_key "notifications", "events"
   add_foreign_key "notifications", "users"
   add_foreign_key "password_reset_tokens", "users"

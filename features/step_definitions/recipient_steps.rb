@@ -30,7 +30,6 @@ When("I delete the recipient {string}") do |name|
   visit recipients_path
   expect(page).to have_content(name)
 
-  # Just click Delete – no JS confirm handling in rack_test driver
   first(:link_or_button, "Remove").click
 end
 
@@ -46,7 +45,6 @@ end
 
 
 When("I submit the updated recipient form") do
-  # Try multiple possible button texts
   begin
     click_button "Save Recipient"
   rescue Capybara::ElementNotFound

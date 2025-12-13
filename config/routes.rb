@@ -38,6 +38,16 @@ Rails.application.routes.draw do
     resources :gift_given_backlogs, only: [:new, :create, :destroy]
   end
 
+  resource :mfa, only: [], controller: 'mfa' do
+    get :setup
+    post :enable
+    delete :disable
+  end
+
+  resource :mfa_session, only: [:new, :create] do
+    post :verify_backup_code
+  end
+
   resources :events do
     resources :ai_gift_suggestions, only: [:index, :create] do
       member do
