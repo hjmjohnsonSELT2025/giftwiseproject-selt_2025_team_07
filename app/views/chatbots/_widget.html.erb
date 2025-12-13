@@ -58,22 +58,18 @@
         </div>
         <div>
           <p style="margin:0; font-size:13px; font-weight:600; color:#111827;">GiftWise Assistant</p>
-          <p style="margin:0; font-size:11px; color:#6b7280;">Ask about events, recipients & wishlist</p>
+          <p style="margin:0; font-size:11px; color:#6b7280;">Ask about events, recipients, budgets & wishlist</p>
         </div>
       </div>
 
       <div style="display:flex; align-items:center; gap:6px; color:#9ca3af; font-size:11px;">
-        <!-- Reload conversation -->
         <button
           type="button"
           title="Restart conversation"
           data-action="click->chatbot#resetConversation"
           style="border:none; background:transparent; cursor:pointer; color:inherit;"
-        >
-          ⟳
-        </button>
+        >⟳</button>
 
-        <!-- Exit session -->
         <button
           type="button"
           title="Exit session"
@@ -86,19 +82,14 @@
             cursor:pointer;
             color:#6b7280;
           "
-        >
-          Exit
-        </button>
+        >Exit</button>
 
-        <!-- Close panel -->
         <button
           type="button"
           title="Close"
           data-action="click->chatbot#closePanel"
           style="border:none; background:transparent; cursor:pointer; font-size:13px; color:#6b7280;"
-        >
-          ✕
-        </button>
+        >✕</button>
       </div>
     </div>
 
@@ -143,9 +134,7 @@
     <div
       data-chatbot-target="quickReplies"
       style="padding: 0 10px 6px 10px; display:flex; flex-wrap:wrap;"
-    >
-      <%# JS fills this from /chatbot/message %>
-    </div>
+    ></div>
 
     <!-- Input -->
     <form
@@ -155,7 +144,7 @@
     >
       <input
         type="text"
-        placeholder="Ask about events, recipients, or wishlist…"
+        placeholder="Ask about events, recipients, budgets, wishlist…"
         data-chatbot-target="input"
         style="
         flex:1;
@@ -178,9 +167,7 @@
           font-weight:500;
           cursor:pointer;
         "
-      >
-        Send
-      </button>
+      >Send</button>
     </form>
   </div>
 </div>

@@ -6,31 +6,24 @@ export default class extends Controller {
     static values = { open: { type: Boolean, default: false } }
 
     connect() {
-        this.csrfToken =
-            document.querySelector("meta[name='csrf-token']")?.content || ""
-
-        // panel starts closed
+        this.csrfToken = document.querySelector("meta[name='csrf-token']")?.content || ""
         this.closePanelHard()
 
-        // bind once so we can remove correctly
+        // Prevent “sometimes works” due to racing requests
+        this.busy = false
+
+        // Bind exactly once (Turbo safe)
         this.boundOutsideClick = this.handleOutsideClick.bind(this)
         document.addEventListener("click", this.boundOutsideClick)
 
-        // event delegation for ALL quick-reply buttons
-        if (this.hasQuickRepliesTarget) {
-            this.boundQuickReplyClick = this.handleQuickReplyClick.bind(this)
-            this.quickRepliesTarget.addEventListener("click", this.boundQuickReplyClick)
-        }
+        // Event delegation for quick replies (buttons re-render often)
+        this.boundQuickReplyClick = this.handleQuickReplyClick.bind(this)
+        this.quickRepliesTarget.addEventListener("click", this.boundQuickReplyClick)
     }
 
     disconnect() {
         document.removeEventListener("click", this.boundOutsideClick)
-        if (this.boundQuickReplyClick && this.hasQuickRepliesTarget) {
-            this.quickRepliesTarget.removeEventListener(
-                "click",
-                this.boundQuickReplyClick
-            )
-        }
+        this.quickRepliesTarget.removeEventListener("click", this.boundQuickReplyClick)
     }
 
     // ---------- Open / close ----------
@@ -63,7 +56,7 @@ export default class extends Controller {
     handleOutsideClick(event) {
         if (!this.openValue) return
 
-        const panel  = this.panelTarget
+        const panel = this.panelTarget
         const button = this.toggleButtonTarget
 
         if (!panel.contains(event.target) && !button.contains(event.target)) {
@@ -71,10 +64,12 @@ export default class extends Controller {
         }
     }
 
-    // ---------- Sending & quick replies ----------
+    // ---------- Sending ----------
 
     send(event) {
         event.preventDefault()
+        if (this.busy) return
+
         const text = this.inputTarget.value.trim()
         if (!text) return
 
@@ -84,13 +79,15 @@ export default class extends Controller {
         this.postToServer({ text })
     }
 
-    // central handler for ALL quick-reply buttons
+    // Quick reply click (delegated)
     handleQuickReplyClick(event) {
+        if (this.busy) return
+
         const btn = event.target.closest("button[data-intent]")
         if (!btn) return
 
         const intent = btn.dataset.intent
-        const label  = btn.innerText.trim()
+        const label = btn.innerText.trim()
         if (!intent) return
 
         this.appendMessage("user", label)
@@ -99,54 +96,65 @@ export default class extends Controller {
 
     resetConversation(event) {
         event.preventDefault()
-        this.postToServer({ command: "reset" }, { skipUserAppend: true })
+        if (this.busy) return
+        this.postToServer({ command: "reset" }, { replaceHistory: true })
     }
 
     exitSession(event) {
         event.preventDefault()
-        this.postToServer({ command: "exit" }, { skipUserAppend: true, closeAfter: true })
+        if (this.busy) return
+        this.postToServer({ command: "exit" }, { replaceHistory: true, closeAfter: true })
     }
 
     // ---------- Server communication ----------
 
     postToServer(payload, opts = {}) {
+        this.busy = true
+        this.setDisabled(true)
+
         fetch("/chatbot/message", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRF-Token": this.csrfToken,
+                "Accept": "application/json"
             },
             body: JSON.stringify(payload),
+            credentials: "same-origin"
         })
             .then((r) => r.json())
             .then((data) => {
-                const messages     = data.messages || []
+                const messages = data.messages || []
                 const quickReplies = data.quick_replies || []
 
-                if (opts.skipUserAppend) {
-                    // full refresh (used for reset/exit)
+                if (opts.replaceHistory) {
                     this.renderHistory(messages)
                 } else {
-                    // just add the last bot message
                     const last = messages[messages.length - 1]
-                    if (last && last.role === "bot") {
-                        this.appendMessage("bot", last.text)
-                    }
+                    if (last && last.role === "bot") this.appendMessage("bot", last.text)
                 }
 
                 this.renderQuickReplies(quickReplies)
                 if (opts.closeAfter) this.closePanel()
             })
             .catch((e) => console.error("Chatbot error", e))
+            .finally(() => {
+                this.busy = false
+                this.setDisabled(false)
+            })
+    }
+
+    setDisabled(disabled) {
+        const buttons = this.quickRepliesTarget.querySelectorAll("button")
+        buttons.forEach((b) => (b.disabled = disabled))
+        this.inputTarget.disabled = disabled
     }
 
     // ---------- Render helpers ----------
 
     renderHistory(messages) {
         this.messagesTarget.innerHTML = ""
-        messages.forEach((msg) =>
-            this.appendMessage(msg.role, msg.text, { dontScroll: true })
-        )
+        messages.forEach((msg) => this.appendMessage(msg.role, msg.text, { dontScroll: true }))
         this.scrollToBottom()
     }
 
@@ -154,8 +162,7 @@ export default class extends Controller {
         const wrapper = document.createElement("div")
         wrapper.style.display = "flex"
         wrapper.style.marginBottom = "6px"
-        wrapper.style.justifyContent =
-            role === "user" ? "flex-end" : "flex-start"
+        wrapper.style.justifyContent = role === "user" ? "flex-end" : "flex-start"
 
         const bubble = document.createElement("div")
         bubble.style.maxWidth = "80%"
