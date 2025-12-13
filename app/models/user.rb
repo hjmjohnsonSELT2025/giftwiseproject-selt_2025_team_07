@@ -1,4 +1,10 @@
+# app/models/user.rb
+# COMPLETE VERSION - All existing functionality + Security enhancements
+
 class User < ApplicationRecord
+  # ========================================
+  # ASSOCIATIONS (EXISTING - NO CHANGES)
+  # ========================================
   has_many :recipients, dependent: :destroy
   has_many :events, dependent: :destroy
   has_many :event_recipients, dependent: :destroy
@@ -6,13 +12,49 @@ class User < ApplicationRecord
   has_many :password_reset_tokens, dependent: :destroy
   has_many :ai_gift_suggestions, dependent: :destroy
 
+  # Friendships
+  has_many :friendships, dependent: :destroy
+  has_many :friends, -> { where(friendships: { status: 'accepted' }) },
+           through: :friendships, source: :friend
+
+  has_many :received_friendships,
+           class_name: 'Friendship',
+           foreign_key: 'friend_id',
+           dependent: :destroy
+
+  has_many :pending_friend_requests, -> { pending },
+           class_name: 'Friendship', foreign_key: 'friend_id'
+
+  has_many :sent_friend_requests, -> { pending },
+           class_name: 'Friendship', foreign_key: 'user_id'
+
+  # Messages
+  has_many :sent_messages, class_name: 'Message',
+           foreign_key: 'sender_id', dependent: :destroy
+
+  has_many :received_messages, class_name: 'Message',
+           foreign_key: 'receiver_id', dependent: :destroy
+
+  # ========================================
+  # ATTR ACCESSORS (EXISTING - NO CHANGES)
+  # ========================================
   attr_accessor :password_confirmation
   attr_reader :password
   attr_accessor :skip_password_validation
 
+  # ========================================
+  # CONSTANTS (EXISTING - NO CHANGES)
+  # ========================================
   VALID_PHONE_REGEX = /\A(\+\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\z/
   VALID_GENDERS = ['Male', 'Female', 'Prefer not to say', 'Other']
 
+  #   SECURITY: New constants for account lockout
+  MAX_FAILED_ATTEMPTS = 5
+  LOCKOUT_DURATION = 30.minutes
+
+  # ========================================
+  # VALIDATIONS (EXISTING - NO CHANGES)
+  # ========================================
   validates :name, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, confirmation: true, if: -> { password.present? }
@@ -22,9 +64,15 @@ class User < ApplicationRecord
 
   validate :password_complexity, if: :password_required?
 
+  # ========================================
+  # CALLBACKS (EXISTING - NO CHANGES)
+  # ========================================
   before_save :downcase_email
   before_save :hash_password, if: -> { @password.present? }
 
+  # ========================================
+  # CLASS METHODS (EXISTING - NO CHANGES)
+  # ========================================
   def self.from_omniauth(auth)
     return nil unless auth&.info&.email
 
@@ -61,6 +109,10 @@ class User < ApplicationRecord
     user
   end
 
+  # ========================================
+  # INSTANCE METHODS (EXISTING - NO CHANGES)
+  # ========================================
+
   def password=(new_password)
     @password = new_password
   end
@@ -89,6 +141,56 @@ class User < ApplicationRecord
     password_reset_tokens.create!
   end
 
+  def friend?(other_user)
+    friends.include?(other_user)
+  end
+
+  def friend_request_pending_with?(other_user)
+    Friendship.exists?(user_id: id, friend_id: other_user.id, status: 'pending') ||
+      Friendship.exists?(user_id: other_user.id, friend_id: id, status: 'pending')
+  end
+
+  def unread_messages_from(user)
+    received_messages.where(sender: user, read: false).count
+  end
+
+  def online?
+    updated_at > 5.minutes.ago
+  end
+
+  # ========================================
+  #   NEW SECURITY METHODS
+  # ========================================
+
+  # Check if account is locked due to failed login attempts
+  def locked?
+    return false if locked_at.blank?
+    locked_at > LOCKOUT_DURATION.ago
+  end
+
+  # Increment failed login attempts and lock if threshold reached
+  def increment_failed_attempts!
+    self.failed_login_attempts ||= 0
+    self.failed_login_attempts += 1
+
+    if failed_login_attempts >= MAX_FAILED_ATTEMPTS
+      self.locked_at = Time.current
+    end
+
+    save(validate: false)
+  end
+
+  # Reset failed attempts and unlock account
+  def reset_failed_attempts!
+    update_columns(
+      failed_login_attempts: 0,
+      locked_at: nil
+    )
+  end
+
+  # ========================================
+  # PRIVATE METHODS
+  # ========================================
   private
 
   def password_db
@@ -99,8 +201,12 @@ class User < ApplicationRecord
     self.email = email.downcase if email.present?
   end
 
+  #   SECURITY: Explicit BCrypt cost factor
   def hash_password
-    write_attribute(:password, BCrypt::Password.create(@password))
+    # Use lower cost in test environment for speed
+    cost = Rails.env.test? ? 4 : 12
+
+    write_attribute(:password, BCrypt::Password.create(@password, cost: cost))
     @password = nil
   end
 

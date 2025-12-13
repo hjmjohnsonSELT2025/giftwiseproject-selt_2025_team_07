@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_12_160029) do
   create_table "ai_gift_suggestions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -34,7 +34,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
   end
 
   create_table "audit_logs", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.string "resource_type"
     t.integer "resource_id"
     t.string "action"
@@ -42,6 +42,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
     t.text "new_value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.text "details"
+    t.string "event_type", default: "resource_audit"
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["event_type"], name: "index_audit_logs_on_event_type"
+    t.index ["ip_address"], name: "index_audit_logs_on_ip_address"
+    t.index ["user_id", "action"], name: "index_audit_logs_on_user_id_and_action"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
@@ -96,6 +105,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
     t.index ["user_id"], name: "index_events_on_user_id"
   end
 
+  create_table "friendships", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "friend_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["friend_id"], name: "index_friendships_on_friend_id"
+    t.index ["user_id", "friend_id"], name: "index_friendships_on_user_id_and_friend_id", unique: true
+    t.index ["user_id"], name: "index_friendships_on_user_id"
+  end
+
   create_table "gift_given_backlogs", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id"
@@ -133,6 +153,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
     t.boolean "read"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "deleted_by_user_ids", default: "[]"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -190,7 +211,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
     t.text "dislikes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "failed_login_attempts", default: 0, null: false
+    t.datetime "locked_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["failed_login_attempts"], name: "index_users_on_failed_login_attempts"
+    t.index ["locked_at"], name: "index_users_on_locked_at"
   end
 
   create_table "wishlists", force: :cascade do |t|
@@ -217,6 +242,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_19_131427) do
   add_foreign_key "event_recipients", "recipients"
   add_foreign_key "event_recipients", "users"
   add_foreign_key "events", "users"
+  add_foreign_key "friendships", "users"
+  add_foreign_key "friendships", "users", column: "friend_id"
   add_foreign_key "gift_given_backlogs", "events"
   add_foreign_key "gift_given_backlogs", "recipients"
   add_foreign_key "gift_given_backlogs", "users"
