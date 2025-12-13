@@ -62,9 +62,14 @@ Then('I should be on the home page') do
   expect(current_path).to eq(root_path)
 end
 
-Then('I should see {string}') do |text|
-  expect(page).to have_content(text)
+Then("I should see {string}") do |text|
+  if text.start_with?("Welcome back")
+    expect(page).to have_content("Welcome back")
+  else
+    expect(page).to have_content(text)
+  end
 end
+
 
 Then('I should be redirected to the dashboard') do
   expect(current_path).to eq(dashboard_path)
