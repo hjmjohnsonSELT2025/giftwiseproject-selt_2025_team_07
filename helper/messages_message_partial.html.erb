@@ -1,0 +1,17 @@
+<% is_sender = message.sender_id == current_user.id %>
+
+<div id="message_<%= message.id %>" class="flex <%= is_sender ? 'justify-end' : 'justify-start' %> animate-fadeIn">
+  <div class="max-w-[70%]">
+    <div class="<%= is_sender ? 'bg-[#a855f7] text-white' : 'bg-gray-100 text-gray-900' %> rounded-2xl px-4 py-3">
+      <p class="text-sm"><%= message.body %></p>
+    </div>
+    <p class="text-xs text-gray-400 mt-1 <%= is_sender ? 'text-right' : 'text-left' %>">
+      <%= message.created_at.strftime("%I:%M %p") %>
+      <% if is_sender && message.read? %>
+        <span class="text-[#a855f7]">✓✓</span>
+      <% elsif is_sender %>
+        <span class="text-gray-400">✓</span>
+      <% end %>
+    </p>
+  </div>
+</div>

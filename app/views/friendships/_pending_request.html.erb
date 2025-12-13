@@ -1,0 +1,25 @@
+<!-- app/views/friendships/_pending_request.html.erb -->
+<div id="pending_request_<%= friendship.id %>" class="flex items-center justify-between p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+  <div class="flex items-center gap-3">
+    <div class="w-12 h-12 rounded-full bg-[#f4e6ff] flex items-center justify-center">
+      <span class="text-[#a855f7] font-semibold text-lg"><%= friendship.user.name.first.upcase %></span>
+    </div>
+    <div>
+      <p class="font-medium text-gray-900"><%= friendship.user.name %></p>
+      <p class="text-sm text-gray-500"><%= friendship.user.email %></p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <%= button_to "Accept",
+                  accept_friendship_path(friendship),
+                  method: :patch,
+                  class: "px-6 py-2 rounded-full bg-[#a855f7] text-white font-medium hover:bg-[#9333ea] transition",
+                  data: { turbo_stream: true } %>
+    <%= button_to "Reject",
+                  reject_friendship_path(friendship),
+                  method: :delete,
+                  class: "px-6 py-2 rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition",
+                  data: { turbo_stream: true, turbo_confirm: "Are you sure you want to reject this request?" } %>
+  </div>
+</div>

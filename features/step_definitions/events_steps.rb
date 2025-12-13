@@ -1,4 +1,4 @@
-
+#features/step_definitions/events_steps.rb
 
 Given('I am logged in as {string} with password {string}') do |email, password|
   visit login_path

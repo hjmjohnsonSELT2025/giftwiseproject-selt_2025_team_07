@@ -48,6 +48,56 @@
           </svg>
         <% end %>
 
+        <!-- Collaboration Requests (two-people icon) -->
+        <%= link_to collaboration_requests_path,
+                    class: "relative p-2 hover:bg-gray-100 rounded-full transition",
+                    title: "Collaboration Requests" do %>
+          <svg xmlns="http://www.w3.org/2000/svg"
+               class="w-6 h-6 text-gray-700 hover:text-[#a855f7]"
+               viewBox="0 0 24 24"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <% if current_user.pending_collaboration_requests.any? %>
+            <span class="absolute top-0 right-0 w-5 h-5 bg-[#a855f7] text-white text-xs rounded-full flex items-center justify-center font-bold">
+              <%= current_user.pending_collaboration_requests.count %>
+            </span>
+          <% end %>
+        <% end %>
+
+        <!-- Friends (person + icon) -->
+        <%= link_to friendships_path,
+                    class: "relative p-2 hover:bg-gray-100 rounded-full transition",
+                    title: "Friends" do %>
+          <svg xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 24 24"
+               class="w-6 h-6 text-gray-700 hover:text-[#a855f7]"
+               fill="none"
+               stroke="currentColor"
+               stroke-width="2"
+               stroke-linecap="round"
+               stroke-linejoin="round">
+            <!-- person -->
+            <circle cx="12" cy="7" r="3"></circle>
+            <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"></path>
+            <!-- plus badge -->
+            <line x1="5" y1="5" x2="5" y2="9"></line>
+            <line x1="3" y1="7" x2="7" y2="7"></line>
+          </svg>
+          <% if current_user.pending_friend_requests.any? %>
+            <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+              <%= current_user.pending_friend_requests.count %>
+            </span>
+          <% end %>
+        <% end %>
+
         <div class="relative" data-controller="dropdown">
           <button
             type="button"
@@ -122,7 +172,7 @@
             <span class="text-lg leading-none">+</span>
           <% end %>
         </div>
-        <p class="text-3xl font-bold text-[#a855f7]"><%= current_user.events.count %></p>
+        <p class="text-3xl font-bold text-[#a855f7]"><%= Event.accessible_to(current_user).count %></p>
       </div>
 
       <div
@@ -182,8 +232,17 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="font-medium text-gray-900"><%= event.event_name %></p>
+                  <div class="flex items-center gap-2">
+                    <p class="font-medium text-gray-900"><%= event.event_name %></p>
+                    <% unless event.owner?(current_user) %>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+        Collaboration
+      </span>
+                    <% end %>
+                  </div>
+
                   <p class="text-sm text-gray-500">
+                    <% primary_recipient = event.recipients.first %>
                     <% if primary_recipient.present? %>
                       <%= primary_recipient.name %> •
                     <% else %>
@@ -192,6 +251,7 @@
                     <%= event.event_date&.strftime("%b %d, %Y") %>
                   </p>
                 </div>
+
               </div>
 
               <div class="flex items-center gap-8">
@@ -245,15 +305,5 @@
     </section>
   </main>
 
-
-
-
-
   <%= render "chatbots/widget" %>
-
-
-
-
-
-
 </div>

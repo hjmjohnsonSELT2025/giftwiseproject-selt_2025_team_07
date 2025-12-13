@@ -4,6 +4,9 @@ class AiGiftSuggestionsController < ApplicationController
   before_action :set_event_recipient, only: :create
   before_action :set_ai_gift_suggestion, only: :toggle_wishlist
 
+  # =====================
+  # Event-level suggestions
+  # =====================
   def index
     @recipients = @event.recipients.order(:name)
 
@@ -17,7 +20,7 @@ class AiGiftSuggestionsController < ApplicationController
   def create
     round_type = params[:round_type] || "initial"
 
-    # In test (and dev) without AI configured, just use stub ideas
+    # If AI is not enabled, use stub ideas in test/dev
     if !ai_enabled? && (Rails.env.test? || Rails.env.development?)
       ideas = generate_test_stub_ideas(@event_recipient, round_type)
       flash[:notice] =
@@ -30,90 +33,108 @@ class AiGiftSuggestionsController < ApplicationController
       event_recipient: @event_recipient
     )
 
-    ideas = suggester.call(round_type: round_type)
+    fallback_used = false
 
-    # Extra safety in test: if Gemini returns nothing, still create stubs
-    if Rails.env.test? && ideas.blank?
-      ideas = generate_test_stub_ideas(@event_recipient, round_type)
+    begin
+      ideas = suggester.call(round_type: round_type)
+    rescue Ai::GeminiClient::Error
+      ideas = []
     end
 
-    flash[:notice] = "Generated #{ideas.size} ideas for #{@event_recipient.recipient.name}."
-    redirect_to event_ai_gift_suggestions_path(@event, from: params[:from])
+    # Extra safety: if AI returns nothing, still create stub ideas
+    begin
+      ideas = suggester.call(round_type: round_type)
+    rescue Ai::GeminiClient::Error
+      ideas = []
+    end
 
-  rescue Ai::GeminiClient::Error => e
-    Rails.logger.error("Gemini error: #{e.message}")
+    if ideas.blank? && (Rails.env.test? || Rails.env.development?)
+      ideas = generate_test_stub_ideas(@event_recipient, round_type)
+      fallback_used = true
+    end
 
-    human_message =
-      if e.message.include?("429") || e.message.include?("RESOURCE_EXHAUSTED")
-        "We’ve hit the AI rate limit for now. Please wait a bit before trying again."
+    flash[:notice] =
+      if fallback_used
+        "Generated #{ideas.size} sample ideas for #{@event_recipient.recipient.name} (AI not configured)."
       else
-        "Sorry, we couldn't generate ideas right now. Please try again later."
+        "Generated #{ideas.size} ideas for #{@event_recipient.recipient.name}."
       end
-
-    if Rails.env.test?
-      ideas = generate_test_stub_ideas(@event_recipient, round_type)
-      flash[:notice] =
-        "Generated #{ideas.size} sample ideas for #{@event_recipient.recipient.name} (AI error in test)."
-    else
-      flash[:alert] = human_message
-    end
 
     redirect_to event_ai_gift_suggestions_path(@event, from: params[:from])
   end
 
   def toggle_wishlist
-    @ai_gift_suggestion.update!(saved_to_wishlist: !@ai_gift_suggestion.saved_to_wishlist)
+    suggestion = @event.ai_gift_suggestions.find(params[:id])
 
-    message =
-      if @ai_gift_suggestion.saved_to_wishlist?
-        "Added “#{@ai_gift_suggestion.title}” to your wishlist."
+    planner_ids = [@event.user_id] +
+                  @event.collaborators.accepted
+                        .where(role: [Collaborator::ROLE_CO_PLANNER, Collaborator::ROLE_OWNER])
+                        .pluck(:user_id)
+
+    planner_ids.uniq!
+
+    ActiveRecord::Base.transaction do
+      already_saved = Wishlist.exists?(user_id: current_user.id, ai_gift_suggestion_id: suggestion.id)
+
+      if already_saved
+        Wishlist.where(user_id: planner_ids, ai_gift_suggestion_id: suggestion.id).delete_all
       else
-        "Removed “#{@ai_gift_suggestion.title}” from your wishlist."
+        planner_ids.each do |uid|
+          Wishlist.find_or_create_by!(user_id: uid, ai_gift_suggestion_id: suggestion.id) do |wl|
+            wl.recipient_id = suggestion.recipient_id
+          end
+        end
       end
-
-    case params[:from]
-    when "wishlist"
-      redirect_to wishlists_path, notice: message
-    else
-      redirect_to event_ai_gift_suggestions_path(@event, from: params[:from]), notice: message
     end
+
+    redirect_back fallback_location: event_ai_gift_suggestions_path(@event, from: params[:from])
   end
 
+  # =====================
+  # AI Library (global)
+  # =====================
   def library
-    @events = current_user.events.order(:event_date, :event_name)
+    @scope = params[:scope].presence_in(%w[mine collab all]) || "mine"
 
-    @selected_event_id     = params[:event_id].presence
+    accessible_events = Event.accessible_to(current_user)
+
+    @events =
+      case @scope
+      when "mine"
+        Event.where(user_id: current_user.id)
+      when "collab"
+        accessible_events.where.not(user_id: current_user.id)
+      else # "all"
+        accessible_events
+      end
+
+    suggestions = AiGiftSuggestion.where(event_id: @events.select(:id))
+
+    # Apply filters (event/recipient/category/saved_only/sort)
+    @selected_event_id = params[:event_id].presence
     @selected_recipient_id = params[:recipient_id].presence
-    @selected_category     = params[:category].presence
-    @saved_only            = params[:saved_only] == "1"
-    @sort                  = params[:sort].presence || "newest"
+    @selected_category = params[:category].presence
+    @sort = params[:sort].presence_in(%w[newest oldest]) || "newest"
+    saved_only = params[:saved_only] == "1"
 
-    @recipients =
-      if @selected_event_id
-        Recipient.joins(:event_recipients)
-                 .where(event_recipients: { user_id: current_user.id, event_id: @selected_event_id })
-                 .distinct
-                 .order(:name)
-      else
-        current_user.recipients.order(:name)
-      end
+    suggestions = suggestions.where(event_id: @selected_event_id) if @selected_event_id
+    suggestions = suggestions.where(recipient_id: @selected_recipient_id) if @selected_recipient_id
+    suggestions = suggestions.where(category: @selected_category) if @selected_category
 
-    @suggestions = AiGiftSuggestion
-                     .where(user: current_user)
-                     .includes(:event, :recipient)
+    if saved_only
+      suggestions = suggestions.joins(:wishlists).where(wishlists: { user_id: current_user.id }).distinct
+    end
 
-    @suggestions = @suggestions.where(event_id: @selected_event_id) if @selected_event_id
-    @suggestions = @suggestions.where(recipient_id: @selected_recipient_id) if @selected_recipient_id
-    @suggestions = @suggestions.where(category: @selected_category) if @selected_category
-    @suggestions = @suggestions.where(saved_to_wishlist: true) if @saved_only
+    suggestions = suggestions.order(created_at: (@sort == "oldest" ? :asc : :desc))
 
-    @suggestions =
-      case @sort
-      when "oldest"
-        @suggestions.order(created_at: :asc)
-      else
-        @suggestions.order(created_at: :desc)
-      end
+    @suggestions = suggestions.includes(:event, :recipient)
+
+    # Recipients dropdown should match the visible event set
+    @recipients = Recipient
+                    .joins(:event_recipients)
+                    .where(event_recipients: { event_id: @events.select(:id) })
+                    .distinct
+                    .order(:name)
   end
 
   private
@@ -124,6 +145,7 @@ class AiGiftSuggestionsController < ApplicationController
       creds.dig(:gemini, :api_key).present?
   end
 
+  # Used only in test / fallback mode
   def generate_test_stub_ideas(event_recipient, round_type)
     existing_titles = AiGiftSuggestion.where(event_recipient: event_recipient).pluck(:title)
 
@@ -142,29 +164,36 @@ class AiGiftSuggestionsController < ApplicationController
 
     chosen_titles.map do |title|
       AiGiftSuggestion.create!(
-        user:            event_recipient.user,
-        event:           event_recipient.event,
-        recipient:       event_recipient.recipient,
-        event_recipient: event_recipient,
-        round_type:      round_type,
-        title:           title,
-        description:     "Test AI suggestion for #{event_recipient.recipient.name}",
-        category:        "General",
-        estimated_price: "$25–$75",
+        user:              current_user,  # <— IMPORTANT: whoever triggered the generation
+        event:             event_recipient.event,
+        recipient:         event_recipient.recipient,
+        event_recipient:   event_recipient,
+        round_type:        round_type,
+        title:             title,
+        description:       "Test AI suggestion for #{event_recipient.recipient.name}",
+        category:          "General",
+        estimated_price:   "$25–$75",
         saved_to_wishlist: false
       )
     end
   end
 
   def set_event
-    @event = current_user.events.find(params[:event_id])
+    @event = Event.accessible_to(current_user).find(params[:event_id])
+
+    # Extra safety: only people allowed to manage gifts can open this page
+    unless @event.can_manage_gifts?(current_user)
+      redirect_to dashboard_path,
+                  alert: "You do not have permission to manage gifts for this event."
+    end
   end
 
   def set_event_recipient
+    # Co-planners should be able to generate ideas too, so don’t lock by user_id
     @event_recipient =
-      EventRecipient.find_by!(user: current_user,
-                              event_id: @event.id,
-                              recipient_id: params[:recipient_id])
+      @event.event_recipients.find_by!(
+        recipient_id: params[:recipient_id]
+      )
   end
 
   def set_ai_gift_suggestion

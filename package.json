@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@rails/actioncable": "^8.1.100",
     "lucide": "^0.553.0"
   }
 }

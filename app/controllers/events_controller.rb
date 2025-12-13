@@ -1,13 +1,14 @@
 class EventsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_event, only: [:show, :edit, :update, :destroy, :add_recipient, :remove_recipient]
+  before_action :authorize_event_management!, only: [:edit, :update, :destroy, :add_recipient, :remove_recipient]
 
   def index
-    @upcoming_events = current_user.events.upcoming
-    @past_events = current_user.events.past
-
-    @event = current_user.events.build
+    @upcoming_events = Event.accessible_to(current_user).upcoming
+    @past_events     = Event.accessible_to(current_user).past
+    @event           = current_user.events.build
   end
+
 
   def new
     @event = Event.new
@@ -18,11 +19,30 @@ class EventsController < ApplicationController
     @event = current_user.events.build(event_params)
 
     if @event.save
+      # 1) Add recipients (existing behaviour)
       if params[:recipient_ids].present?
         params[:recipient_ids].reject(&:blank?).each do |recipient_id|
           @event.event_recipients.create(
             recipient_id: recipient_id,
             user_id: current_user.id
+          )
+        end
+      end
+
+      # 2) Invite selected friends as collaborators (NEW)
+      if params[:invite_collaborators] == "1" && params[:collaborator_friend_ids].present?
+        roles = params[:collaborator_roles] || {}
+
+        params[:collaborator_friend_ids].reject(&:blank?).each do |friend_id|
+          friend = current_user.friends.find_by(id: friend_id)
+          next unless friend
+
+          role = roles[friend_id.to_s].presence || "co_planner"
+
+          @event.collaborators.create!(
+            user:   friend,
+            role:   role,
+            status: "pending"  # they must accept in Collaboration Requests
           )
         end
       end
@@ -34,12 +54,16 @@ class EventsController < ApplicationController
     end
   end
 
+
   def show
-    @event_recipients = @event.event_recipients.includes(:recipient)
-    @all_recipients = current_user.recipients.order(:name)
-    @added_recipient_ids = @event_recipients.pluck(:recipient_id)
+    @event_recipients     = @event.event_recipients.includes(:recipient)
+    @all_recipients       = current_user.recipients.order(:name)
+    @added_recipient_ids  = @event_recipients.pluck(:recipient_id)
     @available_recipients = @all_recipients.where.not(id: @added_recipient_ids)
+
+    @current_user_collab  = @event.collaborator_for(current_user)
   end
+
 
   def edit
     @recipients = current_user.recipients
@@ -112,10 +136,17 @@ class EventsController < ApplicationController
   private
 
   def set_event
-    @event = current_user.events.find(params[:id])
+    @event = Event.accessible_to(current_user).find(params[:id])
   end
 
   def event_params
     params.require(:event).permit(:event_name, :description, :event_date, :location, :budget)
   end
+
+  def authorize_event_management!
+    return if @event.can_manage_event?(current_user)
+
+    redirect_to event_path(@event), alert: "You do not have permission to modify this event."
+  end
+
 end

@@ -1,0 +1,36 @@
+<!-- app/views/messages/create.turbo_stream.erb -->
+<%= turbo_stream.append "messages" do %>
+  <%= render 'messages/message', message: @message, current_user: current_user %>
+<% end %>
+
+<%= turbo_stream.replace "new_message" do %>
+  <%= form_with model: Message.new,
+                url: messages_path(friend_id: @friend.id),
+                method: :post,
+                id: "new_message",
+                data: { turbo_stream: true, chat_target: "form" } do |f| %>
+    <div class="flex gap-3">
+      <%= f.text_field :body,
+                       placeholder: "Type a message...",
+                       class: "flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-[#a855f7] focus:border-transparent outline-none transition bg-gray-50",
+                       autocomplete: "off",
+                       data: { action: "keydown->chat#submitOnEnter" } %>
+      <%= f.submit "Send",
+                   class: "px-6 py-3 rounded-full bg-[#a855f7] text-white font-semibold hover:bg-[#9333ea] transition cursor-pointer shadow-sm" %>
+    </div>
+  <% end %>
+<% end %>
+
+<script>
+    // Scroll to bottom after new message
+    const messagesContainer = document.getElementById("messages");
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Focus input field
+    const inputField = document.querySelector('#new_message input[type="text"]');
+    if (inputField) {
+        inputField.focus();
+    }
+</script>

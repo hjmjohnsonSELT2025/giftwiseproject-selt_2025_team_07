@@ -1,10 +1,8 @@
 <header class="w-full bg-white shadow-sm">
   <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-
     <%= link_to(current_user.present? ? dashboard_path : root_path,
                 class: "flex items-center gap-2 hover:opacity-90 transition") do %>
       <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
-
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 24 24"
              class="w-6 h-6 text-[#a855f7]"
@@ -25,7 +23,6 @@
 
     <nav class="flex items-center gap-4 text-sm font-medium">
       <div class="relative" data-controller="dropdown">
-
         <button
           type="button"
           data-action="click->dropdown#toggle"
@@ -208,6 +205,51 @@
 
           <%= f.submit "Update Profile",
                        class: "flex-1 px-8 py-3 rounded-full bg-black text-white font-semibold hover:bg-gray-900 transition cursor-pointer" %>
+        </div>
+      <% end %>
+
+      <% if @user.password_login? %>
+        <div class="mt-6 bg-gray-50 border-2 border-gray-200 rounded-2xl p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-1">Two-Factor Authentication</h3>
+          <p class="text-xs text-gray-500 mb-4">Use Google Authenticator, Authy, or any TOTP app</p>
+
+          <div class="flex items-center gap-2 mb-2">
+            <% if @user.mfa_enabled? %>
+              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+              <p class="text-sm text-green-600 font-medium">Status: Enabled</p>
+            <% else %>
+              <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <p class="text-sm text-gray-500 font-medium">Status: Disabled</p>
+            <% end %>
+          </div>
+
+          <p class="text-xs text-gray-600 mb-4">
+            <% if @user.mfa_enabled? %>
+              Your account is protected with two-factor authentication
+            <% else %>
+              Add an extra layer of security to your account
+            <% end %>
+          </p>
+
+          <div class="mt-4">
+            <% if @user.mfa_enabled? %>
+              <%= button_to "Disable MFA",
+                            disable_mfa_path,
+                            method: :delete,
+                            data: {
+                              turbo: false,
+                              confirm: "Are you sure you want to disable MFA? This will make your account less secure."
+                            },
+                            style: "display: inline-block; padding: 0.75rem 1.5rem; border-radius: 0.5rem; background-color: #a855f7; color: white; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: all 0.15s ease-in-out;",
+                            onmouseover: "this.style.backgroundColor='#9333ea'",
+                            onmouseout: "this.style.backgroundColor='#a855f7'" %>
+            <% else %>
+              <%= link_to "Enable MFA",
+                          setup_mfa_path,
+                          data: { turbo: false },
+                          class: "inline-block px-6 py-3 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#a855f7] focus:ring-offset-2 shadow-md transition-all" %>
+            <% end %>
+          </div>
         </div>
       <% end %>
     </div>

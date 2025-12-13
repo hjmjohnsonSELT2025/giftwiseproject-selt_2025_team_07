@@ -1,0 +1,19 @@
+<!-- app/views/messages/_message.html.erb -->
+<div class="flex <%= message.sender_id == current_user.id ? 'justify-end' : 'justify-start' %>"
+     id="message_<%= message.id %>">
+  <div class="max-w-[70%]">
+    <div class="<%= message.sender_id == current_user.id ? 'bg-[#a855f7] text-white' : 'bg-white text-gray-900' %> rounded-2xl px-4 py-2 shadow-sm">
+      <p class="text-sm"><%= message.body %></p>
+    </div>
+    <div class="flex items-center gap-2 mt-1 <%= message.sender_id == current_user.id ? 'justify-end' : 'justify-start' %>">
+      <p class="text-xs text-gray-400"><%= message.created_at.strftime('%l:%M %p') %></p>
+      <% if message.sender_id == current_user.id %>
+        <% if message.read? %>
+          <span class="text-xs text-gray-400">✓✓</span>
+        <% else %>
+          <span class="text-xs text-gray-400">✓</span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

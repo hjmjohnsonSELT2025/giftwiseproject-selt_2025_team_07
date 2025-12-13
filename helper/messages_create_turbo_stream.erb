@@ -1,0 +1,21 @@
+<turbo-stream action="append" target="messages">
+  <template>
+    <%= render 'messages/message', message: @message, current_user: current_user %>
+  </template>
+</turbo-stream>
+
+<turbo-stream action="replace" target="new_message">
+  <template>
+    <%= form_with url: messages_path(friend_id: @friend.id), method: :post, id: "new_message", data: { turbo_stream: true, chat_target: "form" } do |f| %>
+      <div class="flex gap-3">
+        <%= f.text_field :body,
+                         placeholder: "Type a message...",
+                         class: "flex-1 px-4 py-3 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-[#a855f7] focus:border-transparent outline-none transition",
+                         autocomplete: "off",
+                         data: { action: "keydown.enter->chat#submitOnEnter" } %>
+        <%= f.submit "Send",
+                     class: "px-6 py-3 rounded-2xl bg-[#a855f7] text-white font-semibold hover:bg-[#9333ea] transition cursor-pointer" %>
+      </div>
+    <% end %>
+  </template>
+</turbo-stream>

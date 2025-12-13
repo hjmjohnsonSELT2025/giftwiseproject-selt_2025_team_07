@@ -1,0 +1,36 @@
+<!-- app/views/friendships/_friend_card.html.erb -->
+<div id="friend_<%= friend.id %>" class="flex items-center justify-between p-3 bg-green-50 rounded-xl border border-green-200">
+  <div class="flex items-center gap-3">
+    <div class="relative">
+      <div class="w-10 h-10 rounded-full bg-[#f4e6ff] flex items-center justify-center">
+        <span class="text-[#a855f7] font-semibold text-sm"><%= friend.name.first.upcase %></span>
+      </div>
+      <!-- Online status indicator (you can add logic later) -->
+      <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+    </div>
+    <div>
+      <p class="font-medium text-gray-900"><%= friend.name %></p>
+      <p class="text-xs text-gray-500"><%= friend.email %></p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <%= link_to messages_path(friend_id: friend.id),
+                class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" do %>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      Message
+    <% end %>
+
+    <% friendship = current_user.friendships.find_by(friend_id: friend.id) %>
+    <% if friendship %>
+      <%= button_to friendships_path(friendship),
+                    method: :delete,
+                    class: "px-4 py-2 rounded-full bg-red-100 text-red-600 text-sm font-medium hover:bg-red-200 transition",
+                    data: { turbo_stream: true, turbo_confirm: "Are you sure you want to remove #{friend.name} from your friends?" } do %>
+        Remove
+      <% end %>
+    <% end %>
+  </div>
+</div>

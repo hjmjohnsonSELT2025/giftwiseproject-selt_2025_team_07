@@ -200,7 +200,9 @@
                     </p>
 
                     <div class="flex items-center justify-between mt-auto">
-                      <% if idea.saved_to_wishlist? %>
+                      <% saved_for_current_user = idea.saved_for_user?(@event.user) %>
+
+                      <% if saved_for_current_user %>
                         <%= button_to toggle_wishlist_event_ai_gift_suggestion_path(@event, idea),
                                       method: :post,
                                       params: { from: params[:from] },
@@ -245,7 +247,7 @@
           <% else %>
             <p class="text-sm text-gray-400 mt-2">
               No AI ideas yet. Click "Generate Ideas" to get suggestions for <%= recipient.name %>.
-            </p>
+            </p>g
           <% end %>
         </div>
       <% end %>

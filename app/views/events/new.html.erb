@@ -205,6 +205,51 @@
             </div>
           <% end %>
 
+          <% friends = current_user.friends %>
+          <% if friends.any? %>
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-2">
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <%= check_box_tag 'invite_collaborators', '1', false,
+                                    id: 'invite_collaborators_checkbox',
+                                    class: "w-4 h-4 rounded border-gray-300 text-[#a855f7] focus:ring-[#a855f7]" %>
+                  Invite friends to collaborate
+                </label>
+                <p class="text-xs text-gray-400">
+                  They’ll get a collaboration request for this event.
+                </p>
+              </div>
+
+              <div id="collaborators_friends_panel"
+                   class="hidden mt-3 p-3 border border-gray-200 rounded-2xl bg-gray-50 max-h-40 overflow-y-auto">
+                <% friends.each do |friend| %>
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-[#f4e6ff] flex items-center justify-center">
+                        <span class="text-[#a855f7] font-semibold text-xs"><%= friend.name.first.upcase %></span>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900"><%= friend.name %></p>
+                        <p class="text-xs text-gray-500"><%= friend.email %></p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                      <%= check_box_tag 'collaborator_friend_ids[]', friend.id, false,
+                                        class: "w-4 h-4 text-[#a855f7] rounded border-gray-300" %>
+
+                      <%= select_tag "collaborator_roles[#{friend.id}]",
+                                     options_for_select([["Co-Planner", "co_planner"],
+                                                         ["Viewer", "viewer"]], "co_planner"),
+                                     class: "text-xs border border-gray-300 rounded-full px-3 py-1 bg-white" %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+
           <%= f.submit "Create Event",
                        class: "w-full mt-4 py-3 px-6 rounded-full bg-black text-white font-semibold hover:bg-gray-900 transition cursor-pointer" %>
 
@@ -223,6 +268,19 @@
             locationInput.addEventListener('input', function(e) {
                 const value = e.target.value.toLowerCase();
                 // custom suggestions (if you want)…
+            });
+        }
+
+        const inviteCheckbox = document.getElementById('invite_collaborators_checkbox');
+        const panel = document.getElementById('collaborators_friends_panel');
+
+        if (inviteCheckbox && panel) {
+            inviteCheckbox.addEventListener('change', function() {
+                if (inviteCheckbox.checked) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
             });
         }
     });

@@ -1,3 +1,4 @@
+#features/step_definitions/profile_steps.rb
 Given('I am on the edit profile page') do
   visit edit_profile_path
 end

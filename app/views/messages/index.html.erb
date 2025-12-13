@@ -1,0 +1,130 @@
+<!-- app/views/messages/index.html.erb -->
+<div class="min-h-screen bg-[#f5f5fb]">
+  <!-- Header -->
+  <header class="w-full bg-white shadow-sm">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+      <%= link_to dashboard_path, class: "flex items-center gap-2 hover:opacity-90 transition" do %>
+        <div class="w-9 h-9 rounded-2xl bg-[#f4e6ff] flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6 text-[#a855f7]" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="8" width="18" height="13" rx="2" ry="2"></rect>
+            <path d="M12 8v13"></path>
+            <path d="M3 12h18"></path>
+          </svg>
+        </div>
+        <span class="text-xl font-semibold tracking-tight">GiftWise</span>
+      <% end %>
+    </div>
+  </header>
+
+  <div class="max-w-4xl mx-auto px-6 py-8">
+    <%= link_to friendships_path, class: "inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6" do %>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Friends
+    <% end %>
+
+    <!-- Chat Window Container -->
+    <div class="bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
+
+      <!-- Chat Header -->
+      <div class="px-6 py-4 bg-[#a855f7] text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center relative">
+            <span class="font-semibold text-white text-lg"><%= @friend.name[0].upcase %></span>
+            <% if @friend.online? %>
+              <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></span>
+            <% end %>
+          </div>
+          <div>
+            <h2 class="text-lg font-semibold"><%= @friend.name %></h2>
+            <p class="text-sm text-white/80">
+              <% if @friend.online? %>
+                <span class="flex items-center gap-1">
+                  <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                  Online
+                </span>
+              <% else %>
+                Offline
+              <% end %>
+            </p>
+          </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex items-center gap-2">
+          <!-- Clear Messages Button - Shows if ANY messages exist in database -->
+          <% total_messages = Message.between(current_user, @friend).count %>
+          <% if total_messages > 0 %>
+            <%= button_to clear_messages_path(friend_id: @friend.id),
+                          method: :delete,
+                          data: {
+                            turbo_confirm: "⚠️ Are you sure you want to clear all messages with #{@friend.name}?\n\nThis will only clear the chat from YOUR view. #{@friend.name} will still see all messages.",
+                            turbo_method: :delete
+                          },
+                          class: "p-2 rounded-full bg-white/10 hover:bg-white/20 transition",
+                          title: "Clear Messages" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            <% end %>
+          <% end %>
+
+          <!-- Close Button -->
+          <%= link_to friendships_path, class: "p-2 rounded-full bg-white/10 hover:bg-white/20 transition", title: "Close Chat" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Messages Container -->
+      <div id="messages"
+           class="p-6 space-y-4 h-[500px] overflow-y-auto bg-gray-50"
+           data-controller="chat"
+           data-chat-user-id-value="<%= current_user.id %>"
+           data-chat-friend-id-value="<%= @friend.id %>">
+        <% if @messages.any? %>
+          <% @messages.each do |message| %>
+            <%= render 'messages/message', message: message, current_user: current_user %>
+          <% end %>
+        <% else %>
+          <div class="flex flex-col items-center justify-center h-full text-center">
+            <div class="w-16 h-16 rounded-full bg-[#f4e6ff] flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#a855f7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <p class="text-gray-400 text-sm">No messages yet</p>
+            <p class="text-gray-400 text-xs mt-1">Start a conversation with <%= @friend.name %>!</p>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Message Input -->
+      <div class="p-4 bg-white border-t border-gray-200">
+        <%= form_with model: @message,
+                      url: messages_path(friend_id: @friend.id),
+                      method: :post,
+                      id: "new_message",
+                      data: { turbo_stream: true, chat_target: "form" } do |f| %>
+          <div class="flex gap-3">
+            <%= f.text_field :body,
+                             placeholder: "Type a message...",
+                             class: "flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-[#a855f7] focus:border-transparent outline-none transition bg-gray-50",
+                             autocomplete: "off",
+                             data: { action: "keydown->chat#submitOnEnter" } %>
+            <%= f.submit "Send",
+                         class: "px-6 py-3 rounded-full bg-[#a855f7] text-white font-semibold hover:bg-[#9333ea] transition cursor-pointer shadow-sm" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

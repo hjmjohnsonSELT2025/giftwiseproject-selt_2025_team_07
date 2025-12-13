@@ -1,13 +1,13 @@
 class WishlistsController < ApplicationController
-  # add any auth filter you use here, e.g.:
-  # before_action :require_login
+  before_action :authenticate_user!
 
   def index
-    @wishlist_items =
-      current_user
-        .ai_gift_suggestions
-        .where(saved_to_wishlist: true)
-        .includes(:event, :recipient)
-        .order(created_at: :desc)
+    # AI gift suggestions saved by the current user
+    @wishlist_items = AiGiftSuggestion
+                        .joins(:wishlists)
+                        .where(wishlists: { user_id: current_user.id })
+                        .includes(:event, :recipient)
+                        .order("wishlists.created_at DESC")
+                        .distinct
   end
 end

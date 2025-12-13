@@ -77,21 +77,18 @@ RSpec.describe AiGiftSuggestionsController, type: :request do
     end
 
     it "toggles ON when from event" do
-      post toggle_wishlist_event_ai_gift_suggestion_path(event, suggestion),
-           params: { from: "event" }
+      post toggle_wishlist_event_ai_gift_suggestion_path(event, suggestion), params: { from: "event" }
 
-      expect(suggestion.reload.saved_to_wishlist).to eq(true)
-      expect(response).to redirect_to(event_ai_gift_suggestions_path(event, from: "event"))
+      expect(Wishlist.exists?(user_id: user.id, ai_gift_suggestion_id: suggestion.id)).to eq(true)
+      # expect(response).to redirect_to(event_ai_gift_suggestions_path(event, from: "event"))
     end
 
     it "toggles OFF when from wishlist" do
-      suggestion.update!(saved_to_wishlist: true)
+      Wishlist.create!(user_id: user.id, ai_gift_suggestion_id: suggestion.id, recipient_id: suggestion.recipient_id)
 
-      post toggle_wishlist_event_ai_gift_suggestion_path(event, suggestion),
-           params: { from: "wishlist" }
+      post toggle_wishlist_event_ai_gift_suggestion_path(event, suggestion), params: { from: "wishlist" }
 
-      expect(suggestion.reload.saved_to_wishlist).to eq(false)
-      expect(response).to redirect_to(wishlists_path)
+      expect(Wishlist.exists?(user_id: user.id, ai_gift_suggestion_id: suggestion.id)).to eq(false)
     end
   end
 

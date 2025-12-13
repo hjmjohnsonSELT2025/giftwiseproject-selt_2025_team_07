@@ -1,0 +1,82 @@
+<!-- app/views/shared/_chat_icon.html.erb -->
+<% if current_user&.friends&.any? %>
+  <div class="fixed bottom-24 left-6 z-40" data-controller="chat-icon">
+    <!-- Chat Button -->
+    <button type="button"
+            data-action="click->chat-icon#toggle"
+            class="w-14 h-14 rounded-full bg-[#a855f7] text-white shadow-lg hover:bg-[#9333ea] transition flex items-center justify-center relative group">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+
+      <% unread_count = current_user.received_messages.where(read: false).count %>
+      <% if unread_count > 0 %>
+        <span class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold">
+          <%= unread_count %>
+        </span>
+      <% end %>
+
+      <!-- Tooltip -->
+      <span class="absolute left-16 px-3 py-1 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+        Messages
+      </span>
+    </button>
+
+    <!-- Friends List Popup -->
+    <div data-chat-icon-target="popup"
+         class="hidden absolute bottom-16 left-0 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+
+      <!-- Header -->
+      <div class="p-4 bg-[#a855f7] text-white">
+        <h3 class="font-semibold text-lg">Messages</h3>
+      </div>
+
+      <!-- Friends List -->
+      <div class="max-h-96 overflow-y-auto">
+        <% current_user.friends.each do |friend| %>
+          <% unread_from_friend = current_user.unread_messages_from(friend) %>
+          <%= link_to messages_path(friend_id: friend.id),
+                      class: "block p-4 hover:bg-gray-50 border-b border-gray-100 transition" do %>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-[#f4e6ff] flex items-center justify-center relative flex-shrink-0">
+                <span class="font-semibold text-[#a855f7]"><%= friend.name[0].upcase %></span>
+                <% if friend.online? %>
+                  <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                <% end %>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-900 truncate"><%= friend.name %></p>
+                <p class="text-sm text-gray-500 truncate">
+                  <% if friend.online? %>
+                    <span class="text-green-600">● Online</span>
+                  <% else %>
+                    Offline
+                  <% end %>
+                </p>
+              </div>
+              <% if unread_from_friend > 0 %>
+                <span class="w-6 h-6 bg-[#a855f7] text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  <%= unread_from_friend %>
+                </span>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+
+        <% if current_user.friends.empty? %>
+          <div class="p-8 text-center text-gray-400">
+            <p class="mb-2">No friends yet!</p>
+            <%= link_to "Add Friends", friendships_path, class: "text-[#a855f7] hover:underline text-sm font-medium" %>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-3 bg-gray-50 border-t border-gray-200">
+        <%= link_to friendships_path, class: "block text-center text-sm text-[#a855f7] hover:underline font-medium" do %>
+          See All Friends
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -18,3 +18,15 @@ Feature: Wishlist
     Given I have no wishlist items
     When I visit the wishlist page
     Then I should see the empty wishlist message
+
+#Feature: Wishlist toggle and wishlist page
+#
+#  Background:
+#    Given I am logged in as "owner@example.com"
+#    And I have an event with AI ideas
+#
+#  Scenario: Saving an idea from AI library appears on Wishlist page
+#    When I visit the AI Gift Library page
+#    And I click the first "♡" wishlist button
+#    And I visit the Wishlist page
+#    Then I should see the saved idea title

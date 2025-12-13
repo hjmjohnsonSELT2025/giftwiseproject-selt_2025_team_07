@@ -26,7 +26,6 @@ Rails.application.routes.draw do
   # Chatbot API
   post "chatbot/message", to: "chatbots#message"
 
-
   resource :profile, only: [:edit, :update]
 
   resource :password, only: [:edit, :update]
@@ -37,6 +36,16 @@ Rails.application.routes.draw do
   resources :recipients do
     resources :gift_ideas, only: [:new, :create, :destroy]
     resources :gift_given_backlogs, only: [:new, :create, :destroy]
+  end
+
+  resource :mfa, only: [], controller: 'mfa' do
+    get :setup
+    post :enable
+    delete :disable
+  end
+
+  resource :mfa_session, only: [:new, :create] do
+    post :verify_backup_code
   end
 
   resources :events do
@@ -53,6 +62,50 @@ Rails.application.routes.draw do
   end
 
   resources :wishlists, only: [:index]
+
+  # ========================================
+  # DIRECT MESSAGING ROUTES
+  # ========================================
+
+  # Friendships routes
+  resources :friendships, only: [:index, :create, :destroy] do
+    member do
+      patch :accept
+      delete :reject
+    end
+  end
+  # Messages routes
+  resources :messages, only: [:index, :create] do
+    collection do
+      get :conversations
+      delete :clear, to: 'messages#clear', as: 'clear'  # Clear chat action
+    end
+  end
+  # ActionCable mount for real-time messaging
+  mount ActionCable.server => '/cable'
+
+  #collaborations
+  resources :events do
+    resources :ai_gift_suggestions, only: [:index, :create] do
+      member do
+        post :toggle_wishlist
+      end
+    end
+
+    resources :collaborators, only: [:create, :update, :destroy]
+
+    member do
+      post :add_recipient
+      delete :remove_recipient
+    end
+  end
+
+  resources :collaboration_requests, only: [:index] do
+    member do
+      post   :accept
+      delete :reject
+    end
+  end
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

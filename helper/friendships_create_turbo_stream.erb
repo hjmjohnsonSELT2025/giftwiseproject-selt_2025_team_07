@@ -1,0 +1,10 @@
+<turbo-stream action="remove" target="user_<%= @friendship.friend_id %>">
+</turbo-stream>
+
+<turbo-stream action="append" target="flash_messages">
+  <template>
+    <div class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg animate-fadeIn">
+      Friend request sent to <%= @friendship.friend.name %>!
+    </div>
+  </template>
+</turbo-stream>

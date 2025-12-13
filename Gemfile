@@ -2,6 +2,10 @@ source "https://rubygems.org"
 
 ruby "3.3.8"
 
+gem 'rotp'
+gem 'rqrcode'
+
+
 # Core Rails
 gem "rails", "~> 7.1.6"
 

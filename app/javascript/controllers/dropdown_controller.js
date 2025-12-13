@@ -1,24 +1,27 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["menu"]
+  static targets = ["menu"]
 
-    connect() {
-        this.hideOnClickOutside = this.hideOnClickOutside.bind(this)
-        window.addEventListener("click", this.hideOnClickOutside)
-    }
+  connect() {
+    this.boundHandleClickOutside = this.handleClickOutside.bind(this)
+  }
 
-    disconnect() {
-        window.removeEventListener("click", this.hideOnClickOutside)
-    }
+  toggle(event) {
+    event.stopPropagation()
+    this.menuTarget.classList.toggle("hidden")
 
-    toggle(event) {
-        event.stopPropagation()
-        this.menuTarget.classList.toggle("hidden")
+    if (!this.menuTarget.classList.contains("hidden")) {
+      setTimeout(() => {
+        document.addEventListener("click", this.boundHandleClickOutside)
+      }, 10)
     }
+  }
 
-    hideOnClickOutside(event) {
-        if (this.element.contains(event.target)) return
-        this.menuTarget.classList.add("hidden")
+  handleClickOutside(event) {
+    if (!this.element.contains(event.target)) {
+      this.menuTarget.classList.add("hidden")
+      document.removeEventListener("click", this.boundHandleClickOutside)
     }
+  }
 }
