@@ -1,0 +1,86 @@
+<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
+
+
+
+  <main class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-semibold">My Orders</h1>
+      <%= link_to "Back to Cart", cart_path,
+                  class: "inline-flex items-center px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-100" %>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-200 p-5 mb-6">
+      <%= form_with url: orders_path, method: :get, local: true do %>
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="text-xs text-gray-500">Status</label>
+            <select name="status" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="">All</option>
+              <% Order::STATUSES.each do |st| %>
+                <option value="<%= st %>" <%= "selected" if @selected_status == st %>><%= st.titleize %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs text-gray-500">Event</label>
+            <select name="event_id" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="">All</option>
+              <% @events.each do |e| %>
+                <option value="<%= e.id %>" <%= "selected" if @selected_event_id.to_s == e.id.to_s %>><%= e.event_name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs text-gray-500">Recipient</label>
+            <select name="recipient_id" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="">All</option>
+              <% @recipients.each do |r| %>
+                <option value="<%= r.id %>" <%= "selected" if @selected_recipient_id.to_s == r.id.to_s %>><%= r.name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
+            <button class="inline-flex items-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-black transition">
+              Apply
+            </button>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @orders.empty? %>
+      <div class="bg-white rounded-3xl border border-dashed border-gray-300 px-6 py-10 text-center">
+        <p class="text-sm text-gray-500 mb-2">No orders found.</p>
+      </div>
+    <% else %>
+      <div class="space-y-4">
+        <% @orders.each do |order| %>
+          <div class="bg-white rounded-3xl border border-gray-200 p-5 flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">
+                Order #<%= order.id %> • <%= order.created_at.strftime("%b %d, %Y") %>
+              </p>
+              <p class="text-sm font-semibold text-gray-900">
+                Status:
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold
+                  <%= order.status == "delivered" ? "bg-emerald-50 text-emerald-700" : order.status == "cancelled" ? "bg-red-50 text-red-700" : "bg-purple-50 text-purple-700" %>">
+                  <%= order.status.titleize %>
+                </span>
+              </p>
+              <p class="text-xs text-gray-400 mt-1">
+                <%= pluralize(order.order_items.count, "item") %>
+              </p>
+            </div>
+
+            <%= link_to "View",
+                        order_path(order),
+                        class: "inline-flex items-center justify-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </main>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   create_table "ai_gift_suggestions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "event_id", null: false
@@ -74,6 +74,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "code_digest"], name: "index_backup_codes_on_user_id_and_code_digest", unique: true
     t.index ["user_id"], name: "index_backup_codes_on_user_id"
+  create_table "cart_items", force: :cascade do |t|
+    t.integer "cart_id", null: false
+    t.integer "ai_gift_suggestion_id", null: false
+    t.integer "recipient_id", null: false
+    t.integer "event_id", null: false
+    t.integer "quantity", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ai_gift_suggestion_id"], name: "index_cart_items_on_ai_gift_suggestion_id"
+    t.index ["cart_id", "ai_gift_suggestion_id"], name: "index_cart_items_on_cart_id_and_ai_gift_suggestion_id", unique: true
+    t.index ["cart_id"], name: "index_cart_items_on_cart_id"
+    t.index ["event_id"], name: "index_cart_items_on_event_id"
+    t.index ["recipient_id"], name: "index_cart_items_on_recipient_id"
+  end
+
+  create_table "carts", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_carts_on_user_id", unique: true
   end
 
   create_table "collaboration_invites", force: :cascade do |t|
@@ -209,6 +229,40 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "order_items", force: :cascade do |t|
+    t.integer "order_id", null: false
+    t.integer "ai_gift_suggestion_id"
+    t.integer "recipient_id", null: false
+    t.integer "event_id", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.string "estimated_price"
+    t.string "category"
+    t.string "image_url"
+    t.integer "quantity", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ai_gift_suggestion_id"], name: "index_order_items_on_ai_gift_suggestion_id"
+    t.index ["event_id"], name: "index_order_items_on_event_id"
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["recipient_id"], name: "index_order_items_on_recipient_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "status", default: "placed", null: false
+    t.datetime "placed_at"
+    t.datetime "delivered_at"
+    t.datetime "cancelled_at"
+    t.text "delivery_address"
+    t.string "delivery_phone"
+    t.text "delivery_note"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_orders_on_status"
+    t.index ["user_id"], name: "index_orders_on_user_id"
+  end
+
   create_table "password_reset_tokens", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "token", null: false
@@ -280,6 +334,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
   add_foreign_key "audit_logs", "users"
   add_foreign_key "authentications", "users"
   add_foreign_key "backup_codes", "users"
+  add_foreign_key "cart_items", "ai_gift_suggestions"
+  add_foreign_key "cart_items", "carts"
+  add_foreign_key "cart_items", "events"
+  add_foreign_key "cart_items", "recipients"
+  add_foreign_key "carts", "users"
   add_foreign_key "collaboration_invites", "events"
   add_foreign_key "collaboration_invites", "users", column: "inviter_id"
   add_foreign_key "collaborators", "events"
@@ -297,6 +356,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_014859) do
   add_foreign_key "mfa_credentials", "users"
   add_foreign_key "notifications", "events"
   add_foreign_key "notifications", "users"
+  add_foreign_key "order_items", "ai_gift_suggestions"
+  add_foreign_key "order_items", "events"
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "order_items", "recipients"
+  add_foreign_key "orders", "users"
   add_foreign_key "password_reset_tokens", "users"
   add_foreign_key "recipients", "users"
   add_foreign_key "wishlists", "ai_gift_suggestions"

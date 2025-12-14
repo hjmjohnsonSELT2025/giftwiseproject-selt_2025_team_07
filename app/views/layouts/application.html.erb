@@ -43,8 +43,17 @@
   });
 <% end %>
 
+<%= render "shared/navbar" unless %w[sessions home].include?(controller_name) %>
+
+
+
 <!-- Main page content -->
-<%= yield %>
+<div class="pt-24">
+  <%= yield %>
+</div>
+
+<%= render "chatbots/widget" if user_signed_in? %>
+
 
 <!-- Modal Blur Script MUST COME AFTER yield -->
 <script>

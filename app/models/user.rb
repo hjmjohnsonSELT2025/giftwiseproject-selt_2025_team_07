@@ -2,6 +2,10 @@ class User < ApplicationRecord
   # ========================================
   # ASSOCIATIONS
   # ========================================
+
+  has_one :cart, dependent: :destroy
+  has_many :orders, dependent: :destroy
+
   has_many :recipients, dependent: :destroy
   has_many :events, dependent: :destroy
   has_many :event_recipients, dependent: :destroy
@@ -64,6 +68,44 @@ class User < ApplicationRecord
   # ========================================
   # ATTR ACCESSORS
   # ========================================
+  # Collaboration relationships
+  has_many :collaborators, class_name: "Collaborator", dependent: :destroy
+  has_many :collaborating_events, through: :collaborators, source: :event
+  has_many :wishlists, dependent: :destroy
+
+  # Friendships
+  has_many :friendships, dependent: :destroy
+  has_many :friends,
+           -> { where(friendships: { status: "accepted" }) },
+           through: :friendships,
+           source: :friend
+
+
+  # Incoming collab invites (where user is invited)
+  has_many :pending_collaboration_requests,
+           -> { pending },
+           class_name: "Collaborator",
+           foreign_key: :user_id
+
+
+  has_many :received_friendships,
+           class_name: 'Friendship',
+           foreign_key: 'friend_id',
+           dependent: :destroy
+
+  has_many :pending_friend_requests, -> { pending },
+           class_name: 'Friendship', foreign_key: 'friend_id'
+
+  has_many :sent_friend_requests, -> { pending },
+           class_name: 'Friendship', foreign_key: 'user_id'
+
+  # Messages
+  has_many :sent_messages, class_name: 'Message',
+           foreign_key: 'sender_id', dependent: :destroy
+
+  has_many :received_messages, class_name: 'Message',
+           foreign_key: 'receiver_id', dependent: :destroy
+
   attr_accessor :password_confirmation
   attr_accessor :skip_password_validation
   attr_reader :password

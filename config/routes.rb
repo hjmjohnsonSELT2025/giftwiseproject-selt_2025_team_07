@@ -93,5 +93,35 @@ Rails.application.routes.draw do
 
   mount ActionCable.server => "/cable"
 
+  # ak
+
+  # Cart
+  resource :cart, only: [:show]
+  resources :cart_items, only: [:create, :destroy] do
+    collection do
+      post :bulk_create_from_wishlist
+      delete :clear
+    end
+  end
+
+  # Orders
+  resources :orders, only: [:index, :show, :create] do
+    member do
+      patch :cancel
+      patch :deliver
+    end
+  end
+
+
+  # ak
+  resources :wishlists, only: [:index] do
+    member do
+      post :move_to_cart
+    end
+  end
+
+
+
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

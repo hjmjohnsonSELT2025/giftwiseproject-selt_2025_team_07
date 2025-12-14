@@ -1,0 +1,105 @@
+<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
+
+
+
+  <main class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-semibold">Order #<%= @order.id %></h1>
+        <p class="text-sm text-gray-500">
+          Placed: <%= @order.placed_at ? @order.placed_at.strftime("%b %d, %Y %I:%M %p") : @order.created_at.strftime("%b %d, %Y") %>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <% if @order.status == "placed" %>
+          <%= button_to "Cancel Order",
+                        cancel_order_path(@order),
+                        method: :patch,
+                        class: "inline-flex items-center px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-100",
+                        form: { data: { turbo: false } } %>
+
+          <%= button_to "Mark as Delivered",
+                        deliver_order_path(@order),
+                        method: :patch,
+                        class: "inline-flex items-center px-4 py-2 rounded-full border border-gray-300 text-sm text-green-700 hover:bg-gray-100",
+                        form: { data: { turbo: false } } %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-200 p-5 mb-6">
+      <p class="text-sm font-semibold mb-2">Tracking</p>
+      <div class="text-sm text-gray-700 space-y-1">
+        <div>✅ Placed: <%= @order.placed_at&.strftime("%b %d, %Y %I:%M %p") || @order.created_at.strftime("%b %d, %Y") %></div>
+        <% if @order.delivered_at.present? %>
+          <div>✅ Delivered: <%= @order.delivered_at.strftime("%b %d, %Y %I:%M %p") %></div>
+        <% elsif @order.cancelled_at.present? %>
+          <div>❌ Cancelled: <%= @order.cancelled_at.strftime("%b %d, %Y %I:%M %p") %></div>
+        <% else %>
+          <div>⏳ Delivery: pending (COD)</div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-200 p-5 mb-6">
+      <p class="text-sm font-semibold mb-2">Delivery info</p>
+      <p class="text-sm text-gray-700 whitespace-pre-line"><%= @order.delivery_address.presence || "Not provided" %></p>
+      <p class="text-sm text-gray-500 mt-1"><%= @order.delivery_phone.presence || "" %></p>
+      <% if @order.delivery_note.present? %>
+        <p class="text-xs text-gray-400 mt-2">Note: <%= @order.delivery_note %></p>
+      <% end %>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-200 p-5 mb-4">
+      <%= form_with url: order_path(@order), method: :get, local: true do %>
+        <div class="flex items-end gap-3">
+          <div>
+            <label class="text-xs text-gray-500">Group items by</label>
+            <select name="group_by" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="recipient" <%= "selected" if @group_by == "recipient" %>>Recipient</option>
+              <option value="event" <%= "selected" if @group_by == "event" %>>Event</option>
+            </select>
+          </div>
+          <button class="inline-flex items-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-black transition">
+            Apply
+          </button>
+        </div>
+      <% end %>
+    </div>
+
+    <% groups =
+         if @group_by == "event"
+           @items.group_by(&:event)
+         else
+           @items.group_by(&:recipient)
+         end %>
+
+    <div class="space-y-6">
+      <% groups.each do |key, items| %>
+        <div class="bg-white rounded-3xl border border-gray-200 p-5">
+          <h2 class="text-lg font-semibold mb-4">
+            <%= @group_by == "event" ? key.event_name : key.name %>
+          </h2>
+
+          <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            <% items.each do |item| %>
+              <div class="bg-gray-50 rounded-3xl border border-gray-100 overflow-hidden flex flex-col">
+                <% if item.image_url.present? %>
+                  <img src="<%= item.image_url %>" class="w-full h-32 object-cover" alt="<%= item.title %>">
+                <% end %>
+                <div class="p-4 flex flex-col flex-1">
+                  <p class="text-xs text-gray-400 mb-1"><%= item.event.event_name %> • <%= item.recipient.name %></p>
+                  <h3 class="font-semibold text-sm mb-1"><%= item.title %></h3>
+                  <p class="text-xs text-gray-600 mb-2 flex-1"><%= truncate(item.description.to_s, length: 120) %></p>
+                  <p class="text-[11px] text-gray-500"><%= item.estimated_price.to_s %></p>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+  </main>
+</div>

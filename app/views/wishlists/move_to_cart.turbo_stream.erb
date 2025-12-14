@@ -1,0 +1,10 @@
+<%= turbo_stream.remove "wishlist_#{params[:id]}" %>
+
+<%= turbo_stream.update "cart_badge" do %>
+  <% cart_count = Cart.for(current_user).cart_items.count %>
+  <% if cart_count > 0 %>
+    <span class="absolute -top-1 -right-1 w-5 h-5 bg-[#a855f7] text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+      <%= cart_count %>
+    </span>
+  <% end %>
+<% end %>

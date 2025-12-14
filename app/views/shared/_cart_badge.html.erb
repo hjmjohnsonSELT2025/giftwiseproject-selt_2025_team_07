@@ -1,0 +1,7 @@
+<% count = Cart.for(current_user).cart_items.count %>
+
+<% if count > 0 %>
+  <span class="absolute -top-1 -right-1 w-5 h-5 bg-[#a855f7] text-white text-xs rounded-full flex items-center justify-center font-bold">
+    <%= count %>
+  </span>
+<% end %>

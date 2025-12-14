@@ -1,0 +1,156 @@
+<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
+
+
+
+  <main class="max-w-6xl mx-auto px-6 pt-10 pb-16">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-semibold">Cart</h1>
+
+      <div class="flex items-center gap-3">
+        <%= button_to "Clear cart",
+                      clear_cart_items_path,
+                      method: :delete,
+                      class: "inline-flex items-center px-4 py-2 rounded-full border border-gray-300 text-sm text-gray-700 hover:bg-gray-100",
+                      form: { data: { turbo: false } } %>
+
+        <%= link_to "My Orders",
+                    orders_path,
+                    class: "inline-flex items-center px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition" %>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-gray-200 p-5 mb-6">
+      <%= form_with url: cart_path, method: :get, local: true do %>
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="text-xs text-gray-500">Group by</label>
+            <select name="group_by" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="recipient" <%= "selected" if @group_by == "recipient" %>>Recipient</option>
+              <option value="event" <%= "selected" if @group_by == "event" %>>Event</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs text-gray-500">Event</label>
+            <select name="event_id" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="">All</option>
+              <% @events.each do |e| %>
+                <option value="<%= e.id %>" <%= "selected" if @selected_event_id.to_s == e.id.to_s %>><%= e.event_name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs text-gray-500">Recipient</label>
+            <select name="recipient_id" class="mt-1 rounded-xl border-gray-200 text-sm">
+              <option value="">All</option>
+              <% @recipients.each do |r| %>
+                <option value="<%= r.id %>" <%= "selected" if @selected_recipient_id.to_s == r.id.to_s %>><%= r.name %></option>
+              <% end %>
+            </select>
+          </div>
+
+          <div>
+            <button class="inline-flex items-center px-4 py-2 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-black transition">
+              Apply
+            </button>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <% if @items.empty? %>
+      <div class="bg-white rounded-3xl border border-dashed border-gray-300 px-6 py-10 text-center">
+        <p class="text-sm text-gray-500 mb-2">Your cart is empty.</p>
+        <p class="text-xs text-gray-400">Add items from AI suggestions or wishlist.</p>
+      </div>
+    <% else %>
+      <% groups =
+           if @group_by == "event"
+             @items.group_by { |i| i.event }
+           else
+             @items.group_by { |i| i.recipient }
+           end %>
+
+      <div class="space-y-6">
+        <% groups.each do |group_key, items| %>
+          <div class="bg-white rounded-3xl border border-gray-200 p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-lg font-semibold">
+                  <%= @group_by == "event" ? group_key.event_name : group_key.name %>
+                </h2>
+                <p class="text-sm text-gray-500">
+                  <%= pluralize(items.size, "item") %>
+                </p>
+              </div>
+            </div>
+
+            <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              <% items.each do |ci| %>
+                <% idea = ci.ai_gift_suggestion %>
+                <div class="bg-gray-50 rounded-3xl border border-gray-100 overflow-hidden flex flex-col">
+                  <% if idea.image_url.present? %>
+                    <img src="<%= idea.image_url %>" class="w-full h-32 object-cover" alt="<%= idea.title %>">
+                  <% end %>
+
+                  <div class="p-4 flex flex-col flex-1">
+                    <p class="text-xs text-gray-400 mb-1">
+                      <%= ci.event.event_name %> • <%= ci.recipient.name %>
+                    </p>
+                    <h3 class="font-semibold text-sm mb-1"><%= idea.title %></h3>
+                    <p class="text-xs text-gray-600 mb-2 flex-1"><%= truncate(idea.description.to_s, length: 120) %></p>
+
+                    <div class="flex items-center justify-between mt-auto">
+                      <span class="text-[11px] text-gray-500">
+                        <%= idea.estimated_price.presence || "" %>
+                      </span>
+
+                      <%= button_to "Remove",
+                                    cart_item_path(ci),
+                                    method: :delete,
+                                    class: "text-xs font-medium text-red-600 hover:text-red-700",
+                                    form: { data: { turbo: false } } %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="bg-white rounded-3xl border border-gray-200 p-6 mt-8">
+        <h2 class="text-lg font-semibold mb-3">Checkout (Cash on Delivery)</h2>
+
+        <%= form_with url: orders_path, method: :post, data: { turbo: false } do %>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-gray-500">Delivery address</label>
+              <textarea name="delivery_address" rows="3"
+                        class="mt-1 w-full rounded-2xl border-gray-200 text-sm"
+                        placeholder="Recipient address or your address..."></textarea>
+            </div>
+
+            <div>
+              <label class="text-xs text-gray-500">Phone</label>
+              <input name="delivery_phone"
+                     class="mt-1 w-full rounded-2xl border-gray-200 text-sm"
+                     placeholder="+1 (xxx) xxx-xxxx" />
+              <label class="text-xs text-gray-500 mt-3 block">Delivery note (optional)</label>
+              <textarea name="delivery_note" rows="2"
+                        class="mt-1 w-full rounded-2xl border-gray-200 text-sm"
+                        placeholder="Leave at door, call on arrival, etc."></textarea>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-end">
+            <button class="inline-flex items-center justify-center px-5 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition">
+              Place Order (COD)
+            </button>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </main>
+</div>
