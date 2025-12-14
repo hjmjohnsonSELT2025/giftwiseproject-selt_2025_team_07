@@ -34,7 +34,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
   end
 
   create_table "audit_logs", force: :cascade do |t|
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.string "resource_type"
     t.integer "resource_id"
     t.string "action"
@@ -42,6 +42,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.text "new_value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.text "details"
+    t.string "event_type", default: "resource_audit"
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["event_type"], name: "index_audit_logs_on_event_type"
+    t.index ["ip_address"], name: "index_audit_logs_on_ip_address"
+    t.index ["user_id", "action"], name: "index_audit_logs_on_user_id_and_action"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
   end
 
@@ -51,7 +60,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.string "uid"
     t.string "email"
     t.string "name"
-    t.string "avatar_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_authentications_on_user_id"
@@ -196,6 +204,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.boolean "read"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "deleted_by_user_ids", default: "[]"
   end
 
   create_table "mfa_credentials", force: :cascade do |t|
@@ -256,11 +265,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
 
   create_table "password_reset_tokens", force: :cascade do |t|
     t.integer "user_id", null: false
-    t.string "token"
-    t.datetime "expires_at"
-    t.boolean "used"
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.boolean "used", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_password_reset_tokens_on_token", unique: true
     t.index ["user_id"], name: "index_password_reset_tokens_on_user_id"
   end
 
@@ -296,7 +306,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.text "dislikes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "failed_login_attempts", default: 0, null: false
+    t.datetime "locked_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["failed_login_attempts"], name: "index_users_on_failed_login_attempts"
+    t.index ["locked_at"], name: "index_users_on_locked_at"
   end
 
   create_table "wishlists", force: :cascade do |t|

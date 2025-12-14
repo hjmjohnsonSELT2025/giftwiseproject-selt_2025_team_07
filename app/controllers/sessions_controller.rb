@@ -12,13 +12,8 @@ class SessionsController < ApplicationController
     end
 
     if user&.authenticate(params[:password])
-      if user.mfa_enabled?
-        session[:pending_mfa_user_id] = user.id
-        redirect_to new_mfa_session_path
-      else
-        session[:user_id] = user.id
-        redirect_to dashboard_path, notice: "Welcome back, #{user.name}!"
-      end
+      session[:user_id] = user.id
+      redirect_to dashboard_path, notice: "Welcome back, #{user.name}!"
     else
       flash.now[:alert] = 'Invalid email or password'
       render :new, status: :unprocessable_content

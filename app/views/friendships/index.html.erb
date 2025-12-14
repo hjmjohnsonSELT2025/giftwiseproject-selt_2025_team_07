@@ -1,141 +1,239 @@
 <!-- app/views/friendships/index.html.erb -->
-<div class="min-h-screen bg-[#f5f5fb] text-gray-900">
-  <!-- Flash Messages Container -->
-  <div id="flash-messages" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-  <!-- Back Button -->
-  <div class="max-w-6xl mx-auto px-6 pt-8">
-    <%= link_to dashboard_path, class: "inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-      </svg>
-      <span class="font-medium">Back to Dashboard</span>
-    <% end %>
-  </div>
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-5xl mx-auto px-4">
+    <!-- Header -->
+    <div class="mb-6">
+      <%= link_to dashboard_path, class: "inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors mb-4" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        Back to Dashboard
+      <% end %>
 
-  <!-- Main Content -->
-  <main class="max-w-6xl mx-auto px-6 pt-6 pb-16">
-    <h1 class="text-4xl font-semibold mb-2">Friends</h1>
-    <p class="text-gray-500 mb-8">Manage your friend connections</p>
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Friends</h1>
+      <p class="text-gray-600">Connect with people and manage your friendships</p>
+    </div>
 
-    <!-- Pending Requests Section -->
-    <% if @pending_requests.any? %>
-      <section class="mb-8">
-        <div class="bg-white rounded-3xl p-6 border border-yellow-200 shadow-sm">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 8v4M12 16h.01"></path>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-xl font-semibold">Pending Requests</h2>
-              <p id="pending_count" class="text-sm text-gray-500"><%= pluralize(@pending_requests.count, "friend request") %> waiting</p>
-            </div>
+    <!-- Clean Search Bar -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-1.5 mb-6">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+        </div>
+        <input
+          id="friend-search-input"
+          type="text"
+          placeholder="Search users to connect with..."
+          class="w-full pl-12 pr-4 py-3.5 text-base rounded-xl border-0 focus:outline-none focus:ring-0 text-gray-700 placeholder-gray-400"
+          autocomplete="off"
+          />
+      </div>
+
+      <!-- Search Results Dropdown -->
+      <div
+        id="friend-search-dropdown"
+        class="hidden mt-2 max-h-[400px] overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-lg"
+      >
+        <!-- Pending Sent Requests Section -->
+        <div id="pending-sent-section" class="<%= @sent_friend_requests.empty? ? 'hidden' : '' %>">
+          <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <p class="font-bold text-orange-600 text-xs uppercase tracking-wider">Requests You Sent</p>
           </div>
-
-          <div class="space-y-3" id="pending_requests_list">
-            <% @pending_requests.each do |friendship| %>
-              <%= render 'friendships/pending_request', friendship: friendship %>
+          <div id="pending-sent-results">
+            <% @sent_friend_requests.each do |friendship| %>
+              <%= render "friendships/search_result_pending", user: friendship.friend %>
             <% end %>
           </div>
         </div>
-      </section>
+
+        <!-- Available Users Section -->
+        <div id="available-search-section">
+          <div id="available-users-header" class="<%= @sent_friend_requests.empty? ? 'hidden' : '' %> px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <p class="font-bold text-gray-700 text-xs uppercase tracking-wider">Available Users</p>
+          </div>
+          <div id="available-search-results">
+            <% @potential_friends.each do |user| %>
+              <%= render "friendships/search_result", user: user, current_user: current_user %>
+            <% end %>
+
+            <% if @potential_friends.empty? %>
+              <div class="px-6 py-10 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                <p class="text-gray-500 text-sm font-medium">No users available</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-search-results" class="hidden px-6 py-10 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <p class="text-gray-500 text-sm font-medium">No users found</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending INCOMING Requests Card -->
+    <% if @pending_requests.any? %>
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-900">Friend Requests</h2>
+            <p id="pending_count" class="text-sm text-gray-500">
+              <%= render "friendships/pending_count", count: @pending_requests.count %>
+            </p>
+          </div>
+        </div>
+
+        <div id="pending_requests_list" class="space-y-3">
+          <% @pending_requests.each do |friendship| %>
+            <%= render "friendships/pending_request", friendship: friendship %>
+          <% end %>
+        </div>
+      </div>
     <% end %>
 
-    <!-- Two Column Layout -->
-    <div class="grid md:grid-cols-2 gap-6">
-      <!-- Your Friends -->
-      <section>
-        <div class="bg-white rounded-3xl p-6 border border-green-200 shadow-sm">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-xl font-semibold">Your Friends</h2>
-              <p id="friends_count" class="text-sm text-gray-500"><%= pluralize(@friends.count, "friend") %></p>
-            </div>
-          </div>
+    <!-- Your Friends Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">Your Friends</h2>
+          <p id="friends_count" class="text-sm text-gray-500">
+            <%= pluralize(@friends.count, "friend") %>
+          </p>
+        </div>
+      </div>
 
-          <% if @friends.any? %>
-            <div class="space-y-3" id="friends_list">
-              <% @friends.each do |friend| %>
-                <%= render 'friendships/friend_card', friend: friend %>
-              <% end %>
-            </div>
-          <% else %>
-            <div class="text-center py-8">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              <p class="text-gray-500">No friends yet</p>
-              <p class="text-sm text-gray-400 mt-1">Add friends from the list →</p>
-            </div>
+      <% if @friends.any? %>
+        <div id="friends_list" class="space-y-3">
+          <% @friends.each do |friend| %>
+            <%= render "friendships/friend_card", friend: friend %>
           <% end %>
         </div>
-      </section>
-
-      <!-- Add Friends -->
-      <section>
-        <div class="bg-white rounded-3xl p-6 border border-[#e9d5ff] shadow-sm">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-full bg-[#f4e6ff] flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#a855f7]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-xl font-semibold">Add Friends</h2>
-              <p class="text-sm text-gray-500"><%= pluralize(@potential_friends.count, "user") %> available</p>
-            </div>
+      <% else %>
+        <div class="text-center py-12">
+          <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
           </div>
-
-          <% if @potential_friends.any? %>
-            <div class="space-y-3" id="potential_friends_list">
-              <% @potential_friends.each do |user| %>
-                <div id="potential_friend_<%= user.id %>" class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-[#f4e6ff] flex items-center justify-center">
-                      <span class="text-[#a855f7] font-semibold text-sm"><%= user.name.first.upcase %></span>
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900"><%= user.name %></p>
-                      <p class="text-xs text-gray-500"><%= user.email %></p>
-                    </div>
-                  </div>
-                  <%= button_to "Add Friend",
-                                friendships_path(friend_id: user.id),
-                                method: :post,
-                                class: "px-4 py-2 rounded-full bg-[#a855f7] text-white text-sm font-medium hover:bg-[#9333ea] transition",
-                                data: { turbo_stream: true } %>
-                </div>
-              <% end %>
-            </div>
-          <% else %>
-            <div class="text-center py-8">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-              <p class="text-gray-500">No more users to add</p>
-              <p class="text-sm text-gray-400 mt-1">You've sent requests to everyone!</p>
-            </div>
-          <% end %>
+          <h3 class="text-base font-semibold text-gray-900 mb-1">No friends yet</h3>
+          <p class="text-gray-500 text-sm">Use the search bar above to find people</p>
         </div>
-      </section>
+      <% end %>
     </div>
-  </main>
+  </div>
 </div>
+
+<script>
+    document.addEventListener('turbo:load', function() {
+        const searchInput = document.getElementById('friend-search-input');
+        const dropdown = document.getElementById('friend-search-dropdown');
+        const pendingSentSection = document.getElementById('pending-sent-section');
+        const pendingSentResults = document.getElementById('pending-sent-results');
+        const availableSection = document.getElementById('available-search-section');
+        const availableResults = document.getElementById('available-search-results');
+        const availableHeader = document.getElementById('available-users-header');
+        const noResultsMsg = document.getElementById('no-search-results');
+
+        if (!searchInput) return;
+
+        searchInput.addEventListener('focus', function() {
+            dropdown.classList.remove('hidden');
+            filterUsers();
+        });
+
+        searchInput.addEventListener('input', function() {
+            dropdown.classList.remove('hidden');
+            filterUsers();
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function filterUsers() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const pendingCards = pendingSentResults.querySelectorAll('[data-search-user]');
+            const availableCards = availableResults.querySelectorAll('[data-search-user]');
+
+            let pendingVisible = 0;
+            let availableVisible = 0;
+
+            pendingCards.forEach(card => {
+                const username = card.getAttribute('data-username').toLowerCase();
+                if (username.includes(searchTerm)) {
+                    card.classList.remove('hidden');
+                    pendingVisible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            availableCards.forEach(card => {
+                const username = card.getAttribute('data-username').toLowerCase();
+                if (username.includes(searchTerm)) {
+                    card.classList.remove('hidden');
+                    availableVisible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (pendingVisible > 0) {
+                pendingSentSection.classList.remove('hidden');
+                availableHeader.classList.remove('hidden');
+            } else {
+                pendingSentSection.classList.add('hidden');
+                if (availableVisible === 0) {
+                    availableHeader.classList.add('hidden');
+                }
+            }
+
+            if (availableVisible > 0) {
+                availableSection.classList.remove('hidden');
+            } else {
+                availableSection.classList.add('hidden');
+            }
+
+            if (pendingVisible === 0 && availableVisible === 0) {
+                noResultsMsg.classList.remove('hidden');
+            } else {
+                noResultsMsg.classList.add('hidden');
+            }
+        }
+
+        filterUsers();
+    });
+</script>
