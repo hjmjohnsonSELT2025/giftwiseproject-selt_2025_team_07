@@ -150,6 +150,11 @@ RSpec.describe EventsController, type: :controller do
         )
       end
 
+      it "raises RecordNotFound error" do
+        expect {
+          post :add_recipient, params: { id: other_event.id, recipient_id: recipient1.id }
+        }.to raise_error(ActiveRecord::RecordNotFound)
+      end
     end
   end
 

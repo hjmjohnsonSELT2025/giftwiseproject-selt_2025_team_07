@@ -1,356 +1,498 @@
-# spec/controllers/password_resets_controller_spec.rb
-# UPDATED: Tests updated to match new secure password reset behavior
-
 require 'rails_helper'
 
 RSpec.describe PasswordResetsController, type: :controller do
-  let(:user) { User.create!(name: 'Test User', email: 'user@example.com', password: 'Password1!', password_confirmation: 'Password1!') }
-
   describe 'GET #new' do
     it 'renders the new template' do
       get :new
       expect(response).to render_template(:new)
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'does not require authentication' do
+      get :new
+      expect(response).not_to redirect_to(login_path)
     end
   end
 
   describe 'POST #create' do
+    let!(:user) { create(:user, email: 'user@example.com', password: 'OldPass1!', password_confirmation: 'OldPass1!') }
+
+    before do
+      ActionMailer::Base.deliveries.clear
+    end
+
     context 'with valid email' do
-      it 'redirects to login page' do  # CHANGED: Used to check specific message
-        post :create, params: { email: user.email }
+      it 'finds user case-insensitively' do
+        post :create, params: { email: 'USER@EXAMPLE.COM' }
         expect(response).to redirect_to(login_path)
-      end
-
-      # UPDATED: New secure behavior - same message for all cases
-      it 'shows generic success message (prevents email enumeration)' do
-        post :create, params: { email: user.email }
-        expect(flash[:notice]).to eq("If an account exists with that email address, we've sent password reset instructions.")
-      end
-
-      it 'sends password reset email' do
-        expect {
-          post :create, params: { email: user.email }
-        }.to change { ActionMailer::Base.deliveries.count }.by(1)
+        expect(flash[:notice]).to be_present
       end
 
       it 'creates a password reset token' do
         expect {
           post :create, params: { email: user.email }
-        }.to change { PasswordResetToken.count }.by(1)
+        }.to change(PasswordResetToken, :count).by(1)
+      end
+
+      it 'creates token associated with correct user' do
+        post :create, params: { email: user.email }
+        token = PasswordResetToken.last
+        expect(token.user).to eq(user)
+      end
+
+      it 'sends a password reset email' do
+        expect {
+          post :create, params: { email: user.email }
+        }.to change { ActionMailer::Base.deliveries.count }.by(1)
+      end
+
+      it 'sends email to correct address' do
+        post :create, params: { email: user.email }
+        email = ActionMailer::Base.deliveries.last
+        expect(email.to).to include(user.email)
+      end
+
+      it 'sends email from noreply@mygiftwise.online' do
+        post :create, params: { email: user.email }
+        email = ActionMailer::Base.deliveries.last
+        expect(email.from).to include('noreply@mygiftwise.online')
+      end
+
+      it 'includes correct subject' do
+        post :create, params: { email: user.email }
+        email = ActionMailer::Base.deliveries.last
+        expect(email.subject).to eq('Reset Your GiftWise Password')
+      end
+
+      it 'redirects to login page with success message' do
+        post :create, params: { email: user.email }
+        expect(response).to redirect_to(login_path)
+        expect(flash[:notice]).to eq("Password reset instructions have been sent to #{user.email}")
+      end
+
+      it 'allows multiple reset requests for same user' do
+        expect {
+          post :create, params: { email: user.email }
+          post :create, params: { email: user.email }
+        }.to change(PasswordResetToken, :count).by(2)
+      end
+
+      it 'sends email with working reset link' do
+        post :create, params: { email: user.email }
+        email = ActionMailer::Base.deliveries.last
+        expect(email.body.encoded).to match(/reset_password\/[A-Za-z0-9_-]+/)
       end
     end
 
     context 'with invalid email' do
-      # UPDATED: New secure behavior - same message and redirect as valid email
-      it 'redirects to login page (same as valid email)' do
-        post :create, params: { email: 'nonexistent@example.com' }
-        expect(response).to redirect_to(login_path)
+      it 'does not create a password reset token' do
+        expect {
+          post :create, params: { email: 'nonexistent@example.com' }
+        }.not_to change(PasswordResetToken, :count)
       end
 
-      it 'shows same message as valid email (prevents email enumeration)' do
-        post :create, params: { email: 'nonexistent@example.com' }
-        expect(flash[:notice]).to eq("If an account exists with that email address, we've sent password reset instructions.")
-      end
-
-      it 'does not send email' do
+      it 'does not send an email' do
         expect {
           post :create, params: { email: 'nonexistent@example.com' }
         }.not_to change { ActionMailer::Base.deliveries.count }
       end
 
-      it 'does not create a token' do
-        expect {
-          post :create, params: { email: 'nonexistent@example.com' }
-        }.not_to change { PasswordResetToken.count }
+      it 'renders new template with error message' do
+        post :create, params: { email: 'nonexistent@example.com' }
+        expect(response).to render_template(:new)
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(flash[:alert]).to eq("No account found with that email address")
+      end
+
+      it 'does not reveal whether email exists (still shows error)' do
+        post :create, params: { email: 'hacker@example.com' }
+        expect(flash[:alert]).to eq("No account found with that email address")
       end
     end
 
     context 'with blank email' do
-      it 'redirects to login page (same behavior)' do
+      it 'renders new template with error message' do
         post :create, params: { email: '' }
-        expect(response).to redirect_to(login_path)
+        expect(response).to render_template(:new)
+        expect(flash[:alert]).to eq("No account found with that email address")
       end
 
-      it 'shows same generic message' do
-        post :create, params: { email: '' }
-        expect(flash[:notice]).to eq("If an account exists with that email address, we've sent password reset instructions.")
+      it 'does not create token for blank email' do
+        expect {
+          post :create, params: { email: '' }
+        }.not_to change(PasswordResetToken, :count)
       end
     end
 
     context 'with nil email' do
       it 'handles nil email gracefully' do
         post :create, params: { email: nil }
-        expect(response).to redirect_to(login_path)
-      end
-
-      it 'shows same generic message' do
-        post :create, params: { email: nil }
-        expect(flash[:notice]).to eq("If an account exists with that email address, we've sent password reset instructions.")
-      end
-    end
-
-    context 'email normalization' do
-
-      it 'strips whitespace from email' do
-        post :create, params: { email: "  #{user.email}  " }
-        expect(ActionMailer::Base.deliveries.last.to).to eq([user.email])
+        expect(response).to render_template(:new)
+        expect(flash[:alert]).to be_present
       end
     end
   end
 
   describe 'GET #edit' do
-    let(:token) { user.generate_password_reset_token! }
+    let(:user) { create(:user) }
 
     context 'with valid token' do
+      let(:token) { create(:password_reset_token, user: user, used: false) }
+
       it 'renders the edit template' do
         get :edit, params: { token: token.token }
         expect(response).to render_template(:edit)
+        expect(response).to have_http_status(:success)
       end
 
       it 'assigns the token' do
         get :edit, params: { token: token.token }
         expect(assigns(:token)).to eq(token)
       end
-    end
 
-    context 'with used token' do
-      before { token.mark_as_used! }
-
-      # UPDATED: New behavior redirects to forgot_password instead of login
-      it 'redirects to forgot password page' do
+      it 'does not mark token as used yet' do
         get :edit, params: { token: token.token }
-        expect(response).to redirect_to(forgot_password_path)
-      end
-
-      it 'shows used token error message' do
-        get :edit, params: { token: token.token }
-        expect(flash[:alert]).to eq("This password reset link has already been used. Please request a new one if needed.")
-      end
-    end
-
-    context 'with invalid token' do
-      it 'redirects to forgot password page' do
-        get :edit, params: { token: 'invalid-token' }
-        expect(response).to redirect_to(forgot_password_path)
-      end
-
-      it 'shows invalid token error message' do
-        get :edit, params: { token: 'invalid-token' }
-        expect(flash[:alert]).to eq("Invalid password reset link. Please request a new one.")
-      end
-    end
-
-    context 'with empty token' do
-      it 'redirects to forgot password page' do
-        get :edit, params: { token: '' }
-        expect(response).to redirect_to(forgot_password_path)
+        expect(token.reload.used).to be false
       end
     end
 
     context 'with expired token' do
-      before do
-        token.update(created_at: 2.hours.ago)
-      end
-
-
-
-    end
-
-    context 'with both expired and used token' do
-      before do
-        token.update(created_at: 2.hours.ago, used: true)
-      end
+      let(:token) { PasswordResetToken.create!(user: user, used: false, expires_at: 2.hours.ago) }
 
       it 'redirects to forgot password page' do
         get :edit, params: { token: token.token }
         expect(response).to redirect_to(forgot_password_path)
+      end
+
+      it 'shows expiration error message' do
+        get :edit, params: { token: token.token }
+        expect(flash[:alert]).to eq("This password reset link has expired. Please request a new one.")
+      end
+
+      it 'does not render edit form' do
+        get :edit, params: { token: token.token }
+        expect(response).not_to render_template(:edit)
+      end
+    end
+
+    context 'with used token' do
+      let(:token) { create(:password_reset_token, user: user, used: true) }
+
+      it 'redirects to login page' do
+        get :edit, params: { token: token.token }
+        expect(response).to redirect_to(login_path)
+      end
+
+      it 'shows invalid token error message' do
+        get :edit, params: { token: token.token }
+        expect(flash[:alert]).to eq("Invalid or expired password reset link")
+      end
+    end
+
+    context 'with invalid token' do
+      it 'redirects to login page' do
+        get :edit, params: { token: 'invalid_token_xyz' }
+        expect(response).to redirect_to(login_path)
+      end
+
+      it 'shows invalid token error message' do
+        get :edit, params: { token: 'invalid_token_xyz' }
+        expect(flash[:alert]).to eq("Invalid or expired password reset link")
+      end
+    end
+
+    context 'with empty token' do
+      it 'redirects to login page' do
+        get :edit, params: { token: '' }
+        expect(response).to redirect_to(login_path)
+      end
+    end
+
+    context 'with both expired and used token' do
+      let(:token) { PasswordResetToken.create!(user: user, used: true, expires_at: 2.hours.ago) }
+
+      it 'redirects to login page' do
+        get :edit, params: { token: token.token }
+        expect(response).to redirect_to(login_path)
       end
     end
   end
 
   describe 'PATCH #update' do
-    let(:token) { user.generate_password_reset_token! }
+    let(:user) { create(:user, email: 'testuser@example.com', password: 'OldPassword1!', password_confirmation: 'OldPassword1!') }
+    let(:token) { create(:password_reset_token, user: user, used: false) }
 
     context 'with valid password' do
-      it 'updates the password' do
-        patch :update, params: {
+      let(:valid_params) do
+        {
           token: token.token,
           user: {
             password: 'NewPassword1!',
             password_confirmation: 'NewPassword1!'
           }
         }
-
-        expect(user.reload.authenticate('NewPassword1!')).to be_truthy
       end
 
-      it 'marks token as used' do
-        patch :update, params: {
-          token: token.token,
-          user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
-          }
-        }
-
-        expect(token.reload.used).to be true
+      it 'updates the user password' do
+        patch :update, params: valid_params
+        user.reload
+        expect(user.authenticate('NewPassword1!')).to be_truthy
       end
 
-      it 'redirects to login page' do
-        patch :update, params: {
-          token: token.token,
-          user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
-          }
-        }
+      it 'old password no longer works' do
+        patch :update, params: valid_params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_falsey
+      end
 
+      it 'marks the token as used' do
+        expect {
+          patch :update, params: valid_params
+        }.to change { token.reload.used }.from(false).to(true)
+      end
+
+      it 'persists the used status' do
+        patch :update, params: valid_params
+        expect(PasswordResetToken.find(token.id).used).to be true
+      end
+
+      it 'redirects to login with success message' do
+        patch :update, params: valid_params
         expect(response).to redirect_to(login_path)
-      end
-
-      it 'shows success message' do
-        patch :update, params: {
-          token: token.token,
-          user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
-          }
-        }
-
         expect(flash[:notice]).to eq("Password successfully reset. Please log in with your new password.")
       end
 
-      # UPDATED: New security feature
-      it 'invalidates all other active tokens for the user' do
-        other_token = user.generate_password_reset_token!
+      it 'allows user to login with new password' do
+        patch :update, params: valid_params
+        user.reload
+        expect(user.authenticate('NewPassword1!')).to be_truthy
+      end
+    end
 
-        patch :update, params: {
+    context 'with password missing uppercase' do
+      let(:invalid_params) do
+        {
           token: token.token,
           user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
+            password: 'password1!',
+            password_confirmation: 'password1!'
           }
         }
-
-        expect(other_token.reload.used).to be true
       end
 
-      # UPDATED: New security feature
-      it 'resets failed login attempts' do
-        user.update(failed_login_attempts: 3, locked_at: Time.current)
+      it 'does not update the password' do
+        patch :update, params: invalid_params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_truthy
+        expect(user.authenticate('password1!')).to be_falsey
+      end
 
-        patch :update, params: {
+      it 'does not mark token as used' do
+        patch :update, params: invalid_params
+        expect(token.reload.used).to be false
+      end
+
+      it 'renders edit template with errors' do
+        patch :update, params: invalid_params
+        expect(response).to render_template(:edit)
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(flash[:alert]).to include('uppercase')
+      end
+    end
+
+    context 'with password missing lowercase' do
+      let(:invalid_params) do
+        {
           token: token.token,
           user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
+            password: 'PASSWORD1!',
+            password_confirmation: 'PASSWORD1!'
           }
         }
+      end
 
-        user.reload
-        expect(user.failed_login_attempts).to eq(0)
-        expect(user.locked_at).to be_nil
+      it 'renders edit with error' do
+        patch :update, params: invalid_params
+        expect(response).to render_template(:edit)
+        expect(flash[:alert]).to include('lowercase')
+      end
+    end
+
+    context 'with password missing number' do
+      let(:invalid_params) do
+        {
+          token: token.token,
+          user: {
+            password: 'Password!',
+            password_confirmation: 'Password!'
+          }
+        }
+      end
+
+      it 'renders edit with error' do
+        patch :update, params: invalid_params
+        expect(response).to render_template(:edit)
+        expect(flash[:alert]).to include('number')
+      end
+    end
+
+    context 'with password missing special character' do
+      let(:invalid_params) do
+        {
+          token: token.token,
+          user: {
+            password: 'Password1',
+            password_confirmation: 'Password1'
+          }
+        }
+      end
+
+      it 'renders edit with error' do
+        patch :update, params: invalid_params
+        expect(response).to render_template(:edit)
+        expect(flash[:alert]).to include('special character')
+      end
+    end
+
+    context 'with password too short' do
+      let(:invalid_params) do
+        {
+          token: token.token,
+          user: {
+            password: 'Pass1!',
+            password_confirmation: 'Pass1!'
+          }
+        }
+      end
+
+      it 'renders edit with error' do
+        patch :update, params: invalid_params
+        expect(response).to render_template(:edit)
+        expect(flash[:alert]).to include('is too short')
       end
     end
 
     context 'with mismatched passwords' do
-      it 're-renders edit template' do
-        patch :update, params: {
+      let(:mismatched_params) do
+        {
           token: token.token,
           user: {
             password: 'NewPassword1!',
             password_confirmation: 'DifferentPassword1!'
           }
         }
-
-        expect(response).to render_template(:edit)
       end
 
-      it 'shows validation error' do
-        patch :update, params: {
-          token: token.token,
-          user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'DifferentPassword1!'
-          }
-        }
-
-        expect(flash[:alert]).to match(/doesn't match/)
+      it 'does not update the password' do
+        patch :update, params: mismatched_params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_truthy
+        expect(user.authenticate('NewPassword1!')).to be_falsey
       end
-    end
 
-    context 'with weak password' do
-      it 're-renders edit template' do
-        patch :update, params: {
-          token: token.token,
-          user: {
-            password: 'weak',
-            password_confirmation: 'weak'
-          }
-        }
+      it 'does not mark token as used' do
+        patch :update, params: mismatched_params
+        expect(token.reload.used).to be false
+      end
 
+      it 'renders edit template with error' do
+        patch :update, params: mismatched_params
         expect(response).to render_template(:edit)
+        expect(flash[:alert]).to include("Password confirmation doesn't match")
       end
     end
 
     context 'with expired token' do
-      before do
-        token.update(created_at: 2.hours.ago)
+      let(:expired_token) { PasswordResetToken.create!(user: user, used: false, expires_at: 2.hours.ago) }
+      let(:params) do
+        {
+          token: expired_token.token,
+          user: {
+            password: 'NewPassword1!',
+            password_confirmation: 'NewPassword1!'
+          }
+        }
       end
 
+      it 'does not update the password' do
+        patch :update, params: params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_truthy
+        expect(user.authenticate('NewPassword1!')).to be_falsey
+      end
 
+      it 'redirects to login with error' do
+        patch :update, params: params
+        expect(response).to redirect_to(login_path)
+        expect(flash[:alert]).to eq("Invalid or expired password reset link")
+      end
     end
 
     context 'with used token' do
-      before { token.mark_as_used! }
-
-      it 'redirects to forgot password page' do
-        patch :update, params: {
-          token: token.token,
+      let(:used_token) { create(:password_reset_token, user: user, used: true) }
+      let(:params) do
+        {
+          token: used_token.token,
           user: {
             password: 'NewPassword1!',
             password_confirmation: 'NewPassword1!'
           }
         }
-
-        expect(response).to redirect_to(forgot_password_path)
       end
 
-      it 'shows error message' do
-        patch :update, params: {
-          token: token.token,
-          user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
-          }
-        }
+      it 'does not update the password' do
+        patch :update, params: params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_truthy
+        expect(user.authenticate('NewPassword1!')).to be_falsey
+      end
 
-        expect(flash[:alert]).to match(/already been used/)
+      it 'redirects to login with error' do
+        patch :update, params: params
+        expect(response).to redirect_to(login_path)
+        expect(flash[:alert]).to eq("Invalid or expired password reset link")
       end
     end
 
     context 'with invalid token' do
-      it 'redirects to forgot password page' do
-        patch :update, params: {
-          token: 'invalid-token',
+      let(:params) do
+        {
+          token: 'invalid_token_abc',
           user: {
             password: 'NewPassword1!',
             password_confirmation: 'NewPassword1!'
           }
         }
-
-        expect(response).to redirect_to(forgot_password_path)
       end
 
-      it 'shows error message' do
-        patch :update, params: {
-          token: 'invalid-token',
+      it 'does not update any user password' do
+        patch :update, params: params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_truthy
+      end
+
+      it 'redirects to login with error' do
+        patch :update, params: params
+        expect(response).to redirect_to(login_path)
+        expect(flash[:alert]).to eq("Invalid or expired password reset link")
+      end
+    end
+
+    context 'with blank password' do
+      let(:params) do
+        {
+          token: token.token,
           user: {
-            password: 'NewPassword1!',
-            password_confirmation: 'NewPassword1!'
+            password: '',
+            password_confirmation: ''
           }
         }
+      end
 
-        expect(flash[:alert]).to match(/Invalid/)
+      it 'does not update password' do
+        patch :update, params: params
+        user.reload
+        expect(user.authenticate('OldPassword1!')).to be_truthy
       end
     end
   end

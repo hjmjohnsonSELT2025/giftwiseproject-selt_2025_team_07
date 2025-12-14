@@ -68,6 +68,10 @@ RSpec.describe Authentication, type: :model do
       u.save!
       u
     end
-  \
+
+    it 'deletes authentication when user is deleted' do
+      user.authentications.create!(provider: 'google_oauth2', uid: '123', email: 'test@example.com', name: 'Test')
+      expect { user.destroy }.to change(Authentication, :count).by(-1)
+    end
   end
 end

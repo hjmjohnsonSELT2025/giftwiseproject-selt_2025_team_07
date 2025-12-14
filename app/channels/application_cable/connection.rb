@@ -10,14 +10,15 @@ module ApplicationCable
     private
 
     def find_verified_user
-      # Get user_id from the request environment (works with session-based auth)
-      user_id = request.session[:user_id]
-
-      if user_id && (verified_user = User.find_by(id: user_id))
+      if verified_user = User.find_by(id: session[:user_id])
         verified_user
       else
         reject_unauthorized_connection
       end
+    end
+
+    def session
+      @session ||= cookies.encrypted[Rails.application.config.session_options[:key]]
     end
   end
 end

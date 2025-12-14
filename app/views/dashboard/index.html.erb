@@ -18,7 +18,7 @@
             <span class="text-lg leading-none">+</span>
           <% end %>
         </div>
-        <p class="text-3xl font-bold text-[#a855f7]"><%= current_user.events.count %></p>
+        <p class="text-3xl font-bold text-[#a855f7]"><%= Event.accessible_to(current_user).count %></p>
       </div>
 
       <div
@@ -78,8 +78,17 @@
                   </svg>
                 </div>
                 <div>
-                  <p class="font-medium text-gray-900"><%= event.event_name %></p>
+                  <div class="flex items-center gap-2">
+                    <p class="font-medium text-gray-900"><%= event.event_name %></p>
+                    <% unless event.owner?(current_user) %>
+      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700">
+        Collaboration
+      </span>
+                    <% end %>
+                  </div>
+
                   <p class="text-sm text-gray-500">
+                    <% primary_recipient = event.recipients.first %>
                     <% if primary_recipient.present? %>
                       <%= primary_recipient.name %> •
                     <% else %>
@@ -88,6 +97,7 @@
                     <%= event.event_date&.strftime("%b %d, %Y") %>
                   </p>
                 </div>
+
               </div>
 
               <div class="flex items-center gap-8">
@@ -141,15 +151,5 @@
     </section>
   </main>
 
-
-
-
-
   <%= render "chatbots/widget" %>
-
-
-
-
-
-
 </div>
