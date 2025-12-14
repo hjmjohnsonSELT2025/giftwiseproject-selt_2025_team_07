@@ -74,6 +74,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.datetime "updated_at", null: false
     t.index ["user_id", "code_digest"], name: "index_backup_codes_on_user_id_and_code_digest", unique: true
     t.index ["user_id"], name: "index_backup_codes_on_user_id"
+  end
+
   create_table "cart_items", force: :cascade do |t|
     t.integer "cart_id", null: false
     t.integer "ai_gift_suggestion_id", null: false
@@ -204,7 +206,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_13_063334) do
     t.boolean "read"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "deleted_by_user_ids", default: "[]"
   end
 
   create_table "mfa_credentials", force: :cascade do |t|
